@@ -1,0 +1,1147 @@
+// EstateIQ — AI-powered multi-tenant Real Estate ERP SaaS
+// Prisma schema (PostgreSQL). Every tenant-scoped model carries organizationId.
+//
+// Prisma ORM v7: the connection URL lives in prisma.config.ts, and the
+// `prisma-client` generator emits plain TypeScript into src/generated/prisma.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum UserStatus {
+  ACTIVE
+  INVITED
+  SUSPENDED
+}
+
+enum OrganizationStatus {
+  ACTIVE
+  TRIAL
+  SUSPENDED
+  CHURNED
+}
+
+enum PlanTier {
+  STARTER
+  GROWTH
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+}
+
+enum MembershipStatus {
+  ACTIVE
+  INVITED
+  SUSPENDED
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
+  EXPIRED
+}
+
+enum UsageMetric {
+  AI_TOKENS
+  AI_REQUESTS
+  ACTIVE_USERS
+  STORAGE_MB
+}
+
+enum LeadStage {
+  NEW
+  CONTACTED
+  QUALIFIED
+  VIEWING
+  NEGOTIATION
+  RESERVATION
+  WON
+  LOST
+}
+
+enum LeadSource {
+  FACEBOOK
+  INSTAGRAM
+  GOOGLE
+  TIKTOK
+  WEBSITE
+  WHATSAPP
+  REFERRAL
+  WALK_IN
+  PROPERTY_PORTAL
+  OTHER
+}
+
+enum LeadTemperature {
+  HOT
+  WARM
+  COLD
+}
+
+enum LeadPriorityCategory {
+  HOT
+  WARM
+  COLD
+}
+
+enum ActivityType {
+  CALL
+  MEETING
+  EMAIL
+  WHATSAPP
+  NOTE
+  STAGE_CHANGE
+  ASSIGNMENT_CHANGE
+  RESERVATION
+  SALE
+  PAYMENT
+  SYSTEM
+}
+
+enum FollowUpType {
+  CALL
+  MEETING
+  EMAIL
+  WHATSAPP
+  VIEWING
+  OTHER
+}
+
+enum FollowUpStatus {
+  PENDING
+  COMPLETED
+  MISSED
+  CANCELLED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum ProjectStatus {
+  PLANNED
+  UNDER_CONSTRUCTION
+  READY
+  SOLD_OUT
+  ON_HOLD
+}
+
+enum UnitType {
+  APARTMENT
+  DUPLEX
+  PENTHOUSE
+  VILLA
+  TOWNHOUSE
+  STUDIO
+  OFFICE
+  RETAIL
+  CHALET
+  LAND
+}
+
+enum UnitStatus {
+  AVAILABLE
+  RESERVED
+  SOLD
+  BLOCKED
+  UNAVAILABLE
+}
+
+enum UnitView {
+  SEA
+  GARDEN
+  POOL
+  CITY
+  LANDSCAPE
+  STREET
+  NONE
+}
+
+enum FinishingType {
+  CORE_SHELL
+  SEMI_FINISHED
+  FULLY_FINISHED
+  FURNISHED
+}
+
+enum ReservationStatus {
+  ACTIVE
+  CONFIRMED
+  EXPIRED
+  CANCELLED
+  CONVERTED
+}
+
+enum SaleStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  CONTRACTED
+  COMPLETED
+  CANCELLED
+}
+
+enum InstallmentStatus {
+  UPCOMING
+  DUE
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  CARD
+  CHEQUE
+  OTHER
+}
+
+enum CampaignPlatform {
+  FACEBOOK
+  INSTAGRAM
+  GOOGLE
+  TIKTOK
+  WEBSITE
+  WHATSAPP
+  REFERRAL
+  PORTAL
+  OTHER
+}
+
+enum CampaignStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  COMPLETED
+}
+
+enum NotificationType {
+  LEAD_ASSIGNED
+  FOLLOW_UP_DUE
+  FOLLOW_UP_OVERDUE
+  RESERVATION_EXPIRING
+  RESERVATION_EXPIRED
+  SALE_APPROVAL_REQUIRED
+  SALE_APPROVED
+  PAYMENT_DUE
+  PAYMENT_OVERDUE
+  PAYMENT_RECEIVED
+  AI_INSIGHT
+  SYSTEM
+}
+
+enum AutomationEvent {
+  LEAD_CREATED
+  LEAD_STAGE_CHANGED
+  LEAD_ASSIGNED
+  FOLLOWUP_OVERDUE
+  RESERVATION_CREATED
+  RESERVATION_EXPIRING
+  SALE_CREATED
+  PAYMENT_DUE
+  PAYMENT_OVERDUE
+  UNIT_AVAILABLE
+}
+
+enum AutomationActionType {
+  CREATE_FOLLOWUP
+  SEND_NOTIFICATION
+  SEND_EMAIL
+  SEND_WHATSAPP
+  ASSIGN_LEAD
+  CHANGE_STAGE
+  GENERATE_REPORT
+}
+
+enum AutomationStatus {
+  SUCCESS
+  FAILED
+  SKIPPED
+}
+
+enum AIMessageRole {
+  USER
+  ASSISTANT
+  TOOL
+  SYSTEM
+}
+
+enum InsightType {
+  SALES_TREND
+  LEAD_FOLLOWUP
+  COLLECTIONS
+  EMPLOYEE_PERFORMANCE
+  INVENTORY_AGING
+  LEAD_SOURCE_ROI
+  FORECAST
+}
+
+enum InsightSeverity {
+  INFO
+  WARNING
+  CRITICAL
+  POSITIVE
+}
+
+// ---------------------------------------------------------------------------
+// Identity domain
+// ---------------------------------------------------------------------------
+
+model User {
+  id              String     @id @default(uuid(7)) @db.Uuid
+  name            String
+  email           String     @unique
+  emailVerifiedAt DateTime?
+  passwordHash    String
+  image           String?
+  phone           String?
+  jobTitle        String?
+  status          UserStatus @default(ACTIVE)
+  isPlatformAdmin Boolean    @default(false)
+  lastLoginAt     DateTime?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  memberships         Membership[]
+  invitationsSent     Invitation[]         @relation("InvitationInvitedBy")
+  invitationsCreated  Invitation[]         @relation("InvitationCreatedBy")
+  passwordResetTokens PasswordResetToken[]
+
+  leadsCreated       Lead[]       @relation("LeadCreatedBy")
+  leadsAssigned      Lead[]       @relation("LeadAssignedTo")
+  activities         LeadActivity[]
+  followUpsAssigned  FollowUp[]   @relation("FollowUpAssignedTo")
+  followUpsCreated   FollowUp[]   @relation("FollowUpCreatedBy")
+  followUpsCompleted FollowUp[]   @relation("FollowUpCompletedBy")
+
+  projectsCreated Project[] @relation("ProjectCreatedBy")
+  unitsCreated    Unit[]    @relation("UnitCreatedBy")
+
+  reservationsSold     Reservation[]  @relation("ReservationSalesperson")
+  reservationsCreated  Reservation[]  @relation("ReservationCreatedBy")
+  salesSold            Sale[]         @relation("SaleSalesperson")
+  salesApproved        Sale[]         @relation("SaleApprovedBy")
+  salesCreated         Sale[]         @relation("SaleCreatedBy")
+  paymentPlansCreated  PaymentPlan[]  @relation("PaymentPlanCreatedBy")
+  paymentsReceived     Payment[]      @relation("PaymentReceivedBy")
+  campaignsCreated     Campaign[]     @relation("CampaignCreatedBy")
+
+  notifications          Notification[]
+  auditLogs              AuditLog[]
+  automationRulesCreated AutomationRule[] @relation("AutomationRuleCreatedBy")
+  aiConversations        AIConversation[]
+  aiMessages             AIMessage[]
+  insightsDismissed      AIInsight[]    @relation("InsightDismissedBy")
+
+  @@index([status])
+  @@index([isPlatformAdmin])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid(7)) @db.Uuid
+  userId    String    @db.Uuid
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// ---------------------------------------------------------------------------
+// Organizations domain
+// ---------------------------------------------------------------------------
+
+model Organization {
+  id              String             @id @default(uuid(7)) @db.Uuid
+  name            String
+  slug            String             @unique
+  legalName       String?
+  country         String?
+  timezone        String             @default("UTC")
+  currency        String             @default("EGP") @db.VarChar(3)
+  status          OrganizationStatus @default(TRIAL)
+  plan            PlanTier           @default(STARTER)
+  aiEnabled       Boolean            @default(true)
+  suspendedAt     DateTime?
+  suspendedReason String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  settings     OrganizationSettings?
+  subscription Subscription?
+  usageRecords UsageRecord[]
+
+  memberships Membership[]
+  roles       Role[]
+  invitations Invitation[]
+
+  leads          Lead[]
+  leadActivities LeadActivity[]
+  followUps      FollowUp[]
+
+  projects  Project[]
+  buildings Building[]
+  units     Unit[]
+
+  reservations Reservation[]
+  sales        Sale[]
+  paymentPlans PaymentPlan[]
+  installments Installment[]
+  payments     Payment[]
+
+  campaigns Campaign[]
+
+  notifications        Notification[]
+  auditLogs            AuditLog[]
+  automationRules      AutomationRule[]
+  automationExecutions AutomationExecution[]
+
+  aiConversations AIConversation[]
+  aiMessages      AIMessage[]
+  aiInsights      AIInsight[]
+
+  exchangeRates ExchangeRate[]
+
+  @@index([status])
+  @@index([plan])
+}
+
+model OrganizationSettings {
+  id                          String       @id @default(uuid(7)) @db.Uuid
+  organizationId              String       @unique @db.Uuid
+  leadSlaHours                Int          @default(24)
+  defaultFollowUpType         FollowUpType @default(CALL)
+  autoCreateFollowUpOnNewLead Boolean      @default(true)
+  aiMonthlyTokenBudget        Int          @default(250000)
+  features                    Json?
+  createdAt                   DateTime     @default(now())
+  updatedAt                   DateTime     @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+model Subscription {
+  id                     String             @id @default(uuid(7)) @db.Uuid
+  organizationId         String             @unique @db.Uuid
+  plan                   PlanTier           @default(STARTER)
+  status                 SubscriptionStatus @default(TRIALING)
+  seats                  Int                @default(5)
+  currentPeriodStart     DateTime           @default(now())
+  currentPeriodEnd       DateTime?
+  trialEndsAt            DateTime?
+  cancelAtPeriodEnd      Boolean            @default(false)
+  externalCustomerId     String?
+  externalSubscriptionId String?
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+}
+
+model UsageRecord {
+  id             String      @id @default(uuid(7)) @db.Uuid
+  organizationId String      @db.Uuid
+  metric         UsageMetric
+  quantity       Int         @default(0)
+  periodStart    DateTime
+  periodEnd      DateTime
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, metric, periodStart])
+  @@index([organizationId, metric])
+}
+
+// ---------------------------------------------------------------------------
+// Memberships, RBAC & invitations
+// ---------------------------------------------------------------------------
+
+model Membership {
+  id             String           @id @default(uuid(7)) @db.Uuid
+  userId         String           @db.Uuid
+  organizationId String           @db.Uuid
+  roleId         String           @db.Uuid
+  status         MembershipStatus @default(ACTIVE)
+  isPrimary      Boolean          @default(false)
+  joinedAt       DateTime         @default(now())
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  role         Role         @relation(fields: [roleId], references: [id], onDelete: Restrict)
+
+  @@unique([userId, organizationId])
+  @@index([organizationId, status])
+  @@index([userId, status])
+  @@index([roleId])
+}
+
+model Role {
+  id             String   @id @default(uuid(7)) @db.Uuid
+  organizationId String   @db.Uuid
+  name           String
+  slug           String
+  description    String?
+  isSystem       Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  permissions  RolePermission[]
+  memberships  Membership[]
+  invitations  Invitation[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+}
+
+model Permission {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  key         String   @unique
+  module      String
+  label       String
+  description String?
+  createdAt   DateTime @default(now())
+
+  roles RolePermission[]
+
+  @@index([module])
+}
+
+model RolePermission {
+  roleId       String @db.Uuid
+  permissionId String @db.Uuid
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@index([permissionId])
+}
+
+model Invitation {
+  id               String           @id @default(uuid(7)) @db.Uuid
+  organizationId   String           @db.Uuid
+  email            String
+  roleId           String           @db.Uuid
+  tokenHash        String           @unique
+  status           InvitationStatus @default(PENDING)
+  invitedById      String?          @db.Uuid
+  createdById      String?          @db.Uuid
+  expiresAt        DateTime
+  acceptedAt       DateTime?
+  acceptedByUserId String?          @db.Uuid
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  role         Role         @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  invitedBy    User?        @relation("InvitationInvitedBy", fields: [invitedById], references: [id], onDelete: SetNull)
+  createdBy    User?        @relation("InvitationCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, status])
+  @@index([email])
+}
+
+// ---------------------------------------------------------------------------
+// CRM domain
+// ---------------------------------------------------------------------------
+
+model Lead {
+  id                 String               @id @default(uuid(7)) @db.Uuid
+  organizationId     String               @db.Uuid
+  firstName          String
+  lastName           String
+  phone              String
+  email              String?
+  country            String?
+  city               String?
+  budgetMin          Decimal?             @db.Decimal(18, 2)
+  budgetMax          Decimal?             @db.Decimal(18, 2)
+  currency           String               @default("EGP") @db.VarChar(3)
+  preferredLocation  String?
+  preferredProjectId String?              @db.Uuid
+  propertyType       UnitType?
+  bedrooms           Int?
+  source             LeadSource           @default(OTHER)
+  campaignId         String?              @db.Uuid
+  stage              LeadStage            @default(NEW)
+  assignedToId       String?              @db.Uuid
+  score              Int                  @default(0)
+  temperature        LeadTemperature      @default(COLD)
+  priorityScore      Int                  @default(0)
+  priorityCategory   LeadPriorityCategory @default(COLD)
+  priorityFactors    String[]             @default([])
+  priorityComputedAt DateTime?
+  notes              String?
+  lostReason         String?
+  nextFollowUpAt     DateTime?
+  lastActivityAt     DateTime?
+  lastContactedAt    DateTime?
+  qualifiedAt        DateTime?
+  wonAt              DateTime?
+  createdById        String?              @db.Uuid
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  campaign         Campaign?    @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  preferredProject Project?     @relation("LeadPreferredProject", fields: [preferredProjectId], references: [id], onDelete: SetNull)
+  assignedTo       User?        @relation("LeadAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+  createdBy        User?        @relation("LeadCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  activities   LeadActivity[]
+  followUps    FollowUp[]
+  reservations Reservation[]
+  sales        Sale[]
+  payments     Payment[]
+
+  @@index([organizationId, stage])
+  @@index([organizationId, createdAt])
+  @@index([organizationId, assignedToId])
+  @@index([organizationId, nextFollowUpAt])
+  @@index([organizationId, source])
+  @@index([organizationId, priorityScore])
+  @@index([campaignId])
+  @@index([phone])
+  @@index([email])
+}
+
+model LeadActivity {
+  id             String       @id @default(uuid(7)) @db.Uuid
+  organizationId String       @db.Uuid
+  leadId         String       @db.Uuid
+  userId         String?      @db.Uuid
+  type           ActivityType
+  subject        String
+  body           String?
+  outcome        String?
+  metadata       Json?
+  occurredAt     DateTime     @default(now())
+  createdAt      DateTime     @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  lead         Lead         @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  user         User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, occurredAt])
+  @@index([leadId, occurredAt])
+  @@index([userId])
+}
+
+model FollowUp {
+  id             String         @id @default(uuid(7)) @db.Uuid
+  organizationId String         @db.Uuid
+  leadId         String         @db.Uuid
+  assignedToId   String         @db.Uuid
+  type           FollowUpType   @default(CALL)
+  dueAt          DateTime
+  status         FollowUpStatus @default(PENDING)
+  priority       Priority       @default(MEDIUM)
+  notes          String?
+  outcome        String?
+  completedAt    DateTime?
+  completedById  String?        @db.Uuid
+  createdById    String?        @db.Uuid
+  reminderSentAt DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  lead         Lead         @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  assignedTo   User         @relation("FollowUpAssignedTo", fields: [assignedToId], references: [id], onDelete: Cascade)
+  completedBy  User?        @relation("FollowUpCompletedBy", fields: [completedById], references: [id], onDelete: SetNull)
+  createdBy    User?        @relation("FollowUpCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, dueAt, status])
+  @@index([organizationId, assignedToId, status])
+  @@index([leadId])
+  @@index([status, dueAt])
+}
+
+model Campaign {
+  id             String           @id @default(uuid(7)) @db.Uuid
+  organizationId String           @db.Uuid
+  name           String
+  platform       CampaignPlatform
+  cost           Decimal          @default(0) @db.Decimal(18, 2)
+  currency       String           @default("EGP") @db.VarChar(3)
+  startDate      DateTime
+  endDate        DateTime?
+  status         CampaignStatus   @default(DRAFT)
+  externalId     String?
+  notes          String?
+  createdById    String?          @db.Uuid
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdBy    User?        @relation("CampaignCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  leads        Lead[]
+
+  @@index([organizationId, status])
+  @@index([organizationId, startDate])
+  @@index([platform])
+}
+
+// ---------------------------------------------------------------------------
+// Inventory domain
+// ---------------------------------------------------------------------------
+
+model Project {
+  id                   String        @id @default(uuid(7)) @db.Uuid
+  organizationId       String        @db.Uuid
+  name                 String
+  code                 String?
+  developer            String?
+  locationCity         String?
+  locationCountry      String?
+  address              String?
+  description          String?
+  status               ProjectStatus @default(PLANNED)
+  launchDate           DateTime?
+  expectedDeliveryDate DateTime?
+  currency             String        @default("EGP") @db.VarChar(3)
+  startingPrice        Decimal?      @db.Decimal(18, 2)
+  totalUnits           Int           @default(0)
+  coverImageUrl        String?
+  createdById          String?       @db.Uuid
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdBy    User?        @relation("ProjectCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  buildings      Building[]
+  units          Unit[]
+  leadsPreferred Lead[]     @relation("LeadPreferredProject")
+
+  @@unique([organizationId, name])
+  @@index([organizationId, status])
+  @@index([organizationId, createdAt])
+  @@index([locationCity])
+}
+
+model Building {
+  id             String   @id @default(uuid(7)) @db.Uuid
+  organizationId String   @db.Uuid
+  projectId      String   @db.Uuid
+  name           String
+  code           String?
+  floors         Int      @default(0)
+  description    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project      Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  units        Unit[]
+
+  @@unique([projectId, name])
+  @@index([organizationId])
+  @@index([projectId])
+}
+
+model Unit {
+  id              String        @id @default(uuid(7)) @db.Uuid
+  organizationId  String        @db.Uuid
+  projectId       String        @db.Uuid
+  buildingId      String?       @db.Uuid
+  unitCode        String
+  floor           Int?
+  type            UnitType
+  bedrooms        Int           @default(0)
+  bathrooms       Int           @default(0)
+  areaSqm         Decimal       @db.Decimal(10, 2)
+  price           Decimal       @db.Decimal(18, 2)
+  currency        String        @default("EGP") @db.VarChar(3)
+  status          UnitStatus    @default(AVAILABLE)
+  view            UnitView      @default(NONE)
+  finishing       FinishingType @default(SEMI_FINISHED)
+  availableFrom   DateTime?
+  statusChangedAt DateTime      @default(now())
+  notes           String?
+  createdById     String?       @db.Uuid
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project      Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  building     Building?    @relation(fields: [buildingId], references: [id], onDelete: SetNull)
+  createdBy    User?        @relation("UnitCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  reservations Reservation[]
+  sales        Sale[]
+
+  @@unique([organizationId, unitCode])
+  @@index([organizationId, status])
+  @@index([organizationId, projectId, status])
+  @@index([organizationId, type, bedrooms])
+  @@index([organizationId, price])
+  @@index([projectId, buildingId])
+  @@index([buildingId])
+}
+
+// ---------------------------------------------------------------------------
+// Sales & reservations domain
+// ---------------------------------------------------------------------------
+
+model Reservation {
+  id             String            @id @default(uuid(7)) @db.Uuid
+  organizationId String            @db.Uuid
+  leadId         String            @db.Uuid
+  unitId         String            @db.Uuid
+  salespersonId  String            @db.Uuid
+  reservedAt     DateTime          @default(now())
+  expiresAt      DateTime
+  amount         Decimal           @db.Decimal(18, 2)
+  currency       String            @default("EGP") @db.VarChar(3)
+  status         ReservationStatus @default(ACTIVE)
+  notes          String?
+  confirmedAt    DateTime?
+  cancelledAt    DateTime?
+  cancelReason   String?
+  createdById    String?           @db.Uuid
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  lead         Lead         @relation(fields: [leadId], references: [id], onDelete: Restrict)
+  unit         Unit         @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  salesperson  User         @relation("ReservationSalesperson", fields: [salespersonId], references: [id], onDelete: Restrict)
+  createdBy    User?        @relation("ReservationCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  sale         Sale?
+
+  @@index([organizationId, status])
+  @@index([organizationId, expiresAt])
+  @@index([leadId])
+  @@index([unitId, status])
+  @@index([salespersonId])
+}
+
+model Sale {
+  id             String     @id @default(uuid(7)) @db.Uuid
+  organizationId String     @db.Uuid
+  reference      String
+  leadId         String     @db.Uuid
+  unitId         String     @db.Uuid
+  reservationId  String?    @unique @db.Uuid
+  salespersonId  String     @db.Uuid
+  salePrice      Decimal    @db.Decimal(18, 2)
+  discount       Decimal    @default(0) @db.Decimal(18, 2)
+  contractValue  Decimal    @db.Decimal(18, 2)
+  currency       String     @default("EGP") @db.VarChar(3)
+  commissionRate Decimal?   @db.Decimal(5, 2)
+  commissionAmount Decimal? @db.Decimal(18, 2)
+  saleDate       DateTime
+  status         SaleStatus @default(DRAFT)
+  approvedById   String?    @db.Uuid
+  approvedAt     DateTime?
+  notes          String?
+  createdById    String?    @db.Uuid
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  lead         Lead         @relation(fields: [leadId], references: [id], onDelete: Restrict)
+  unit         Unit         @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  reservation  Reservation? @relation(fields: [reservationId], references: [id], onDelete: SetNull)
+  salesperson  User         @relation("SaleSalesperson", fields: [salespersonId], references: [id], onDelete: Restrict)
+  approvedBy   User?        @relation("SaleApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+  createdBy    User?        @relation("SaleCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  paymentPlan PaymentPlan?
+  payments    Payment[]
+
+  @@unique([organizationId, reference])
+  @@index([organizationId, status])
+  @@index([organizationId, saleDate])
+  @@index([organizationId, salespersonId])
+  @@index([leadId])
+  @@index([unitId])
+}
+
+model PaymentPlan {
+  id                 String   @id @default(uuid(7)) @db.Uuid
+  organizationId     String   @db.Uuid
+  saleId             String   @unique @db.Uuid
+  totalAmount        Decimal  @db.Decimal(18, 2)
+  downPayment        Decimal  @default(0) @db.Decimal(18, 2)
+  installmentsCount  Int
+  startDate          DateTime
+  currency           String   @default("EGP") @db.VarChar(3)
+  notes              String?
+  createdById        String?  @db.Uuid
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  sale         Sale         @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  createdBy    User?        @relation("PaymentPlanCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  installments Installment[]
+
+  @@index([organizationId, startDate])
+}
+
+model Installment {
+  id             String            @id @default(uuid(7)) @db.Uuid
+  organizationId String            @db.Uuid
+  paymentPlanId  String            @db.Uuid
+  sequence       Int
+  amount         Decimal           @db.Decimal(18, 2)
+  paidAmount     Decimal           @default(0) @db.Decimal(18, 2)
+  dueDate        DateTime
+  status         InstallmentStatus @default(UPCOMING)
+  paidAt         DateTime?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  paymentPlan  PaymentPlan  @relation(fields: [paymentPlanId], references: [id], onDelete: Cascade)
+  payments     Payment[]
+
+  @@unique([paymentPlanId, sequence])
+  @@index([organizationId, dueDate, status])
+  @@index([organizationId, status])
+  @@index([paymentPlanId])
+}
+
+model Payment {
+  id             String        @id @default(uuid(7)) @db.Uuid
+  organizationId String        @db.Uuid
+  saleId         String        @db.Uuid
+  installmentId  String?       @db.Uuid
+  leadId         String?       @db.Uuid
+  amount         Decimal       @db.Decimal(18, 2)
+  currency       String        @default("EGP") @db.VarChar(3)
+  paidAt         DateTime      @default(now())
+  method         PaymentMethod @default(CASH)
+  reference      String?
+  notes          String?
+  receivedById   String?       @db.Uuid
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  sale         Sale         @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  installment  Installment? @relation(fields: [installmentId], references: [id], onDelete: SetNull)
+  lead         Lead?        @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  receivedBy   User?        @relation("PaymentReceivedBy", fields: [receivedById], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, paidAt])
+  @@index([organizationId, saleId])
+  @@index([installmentId])
+  @@index([leadId])
+}
+
+model ExchangeRate {
+  id             String   @id @default(uuid(7)) @db.Uuid
+  organizationId String   @db.Uuid
+  baseCurrency   String   @db.VarChar(3)
+  quoteCurrency  String   @db.VarChar(3)
+  rate           Decimal  @db.Decimal(18, 8)
+  asOf           DateTime @default(now())
+  source         String?
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, baseCurrency, quoteCurrency, asOf])
+  @@index([organizationId, baseCurrency, quoteCurrency])
+}
+
+// ---------------------------------------------------------------------------
+// Notifications, audit & automation domain
+// ---------------------------------------------------------------------------
+
+model Notification {
+  id             String           @id @default(uuid(7)) @db.Uuid
+  organizationId String           @db.Uuid
+  userId         String           @db.Uuid
+  type           NotificationType
+  title          String
+  body           String?
+  entityType     String?
+  entityId       String?
+  link           String?
+  metadata       Json?
+  readAt         DateTime?
+  createdAt      DateTime         @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, userId, readAt])
+  @@index([userId, createdAt])
+  @@index([organizationId, type])
+}
+
+model AuditLog {
+  id             String   @id @default(uuid(7)) @db.Uuid
+  organizationId String?  @db.Uuid
+  userId         String?  @db.Uuid
+  actorEmail     String?
+  action         String
+  entityType     String
+  entityId       String?
+  metadata       Json?
+  ipAddress      String?
+  userAgent      String?
+  createdAt      DateTime @default(now())
+
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, createdAt])
+  @@index([organizationId, entityType, entityId])
+  @@index([organizationId, action])
+  @@index([userId])
+}
+
+model AutomationRule {
+  id             String           @id @default(uuid(7)) @db.Uuid
+  organizationId String           @db.Uuid
+  name           String
+  description    String?
+  event          AutomationEvent
+  conditions     Json             @default("{}")
+  actions        Json             @default("[]")
+  enabled        Boolean          @default(true)
+  lastRunAt      DateTime?
+  runCount       Int              @default(0)
+  createdById    String?          @db.Uuid
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  organization Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdBy    User?                 @relation("AutomationRuleCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  executions   AutomationExecution[]
+
+  @@unique([organizationId, name])
+  @@index([organizationId, event, enabled])
+}
+
+model AutomationExecution {
+  id             String            @id @default(uuid(7)) @db.Uuid
+  organizationId String            @db.Uuid
+  ruleId         String?           @db.Uuid
+  event          AutomationEvent
+  status         AutomationStatus
+  entityType     String?
+  entityId       String?
+  result         Json?
+  error          String?
+  startedAt      DateTime          @default(now())
+  finishedAt     DateTime?
+
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  rule         AutomationRule? @relation(fields: [ruleId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, startedAt])
+  @@index([organizationId, event, status])
+  @@index([ruleId])
+}
+
+// ---------------------------------------------------------------------------
+// AI intelligence domain
+// ---------------------------------------------------------------------------
+
+model AIConversation {
+  id             String   @id @default(uuid(7)) @db.Uuid
+  organizationId String   @db.Uuid
+  userId         String   @db.Uuid
+  title          String
+  archivedAt     DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages     AIMessage[]
+
+  @@index([organizationId, userId, updatedAt])
+  @@index([userId])
+}
+
+model AIMessage {
+  id             String        @id @default(uuid(7)) @db.Uuid
+  organizationId String        @db.Uuid
+  conversationId String        @db.Uuid
+  userId         String?       @db.Uuid
+  role           AIMessageRole
+  content        String
+  toolName       String?
+  toolInput      Json?
+  toolOutput     Json?
+  provider       String?
+  model          String?
+  promptTokens   Int?
+  completionTokens Int?
+  latencyMs      Int?
+  createdAt      DateTime      @default(now())
+
+  organization Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  conversation AIConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([conversationId, createdAt])
+  @@index([organizationId, createdAt])
+  @@index([organizationId, role])
+}
+
+model AIInsight {
+  id             String          @id @default(uuid(7)) @db.Uuid
+  organizationId String          @db.Uuid
+  type           InsightType
+  severity       InsightSeverity @default(INFO)
+  title          String
+  summary        String
+  data           Json
+  entityType     String?
+  entityId       String?
+  periodStart    DateTime?
+  periodEnd      DateTime?
+  dedupeKey      String
+  generatedAt    DateTime        @default(now())
+  dismissedAt    DateTime?
+  dismissedById  String?         @db.Uuid
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  dismissedBy  User?        @relation("InsightDismissedBy", fields: [dismissedById], references: [id], onDelete: SetNull)
+
+  @@unique([organizationId, dedupeKey])
+  @@index([organizationId, generatedAt])
+  @@index([organizationId, severity, dismissedAt])
+}
+
