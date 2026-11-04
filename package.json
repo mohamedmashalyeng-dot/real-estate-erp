@@ -9,6 +9,7 @@
   },
   "scripts": {
     "dev": "next dev",
+    "postinstall": "prisma generate",
     "build": "prisma generate && next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
