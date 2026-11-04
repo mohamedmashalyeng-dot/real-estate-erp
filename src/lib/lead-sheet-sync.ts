@@ -136,6 +136,39 @@ function normalizeText(value: string): string {
   return value.toLowerCase().replace(/\s+/g, " ").trim();
 }
 
+/** Levenshtein distance, giving up (returns max + 1) once it exceeds `max`. */
+function editDistance(a: string, b: string, max: number): number {
+  if (Math.abs(a.length - b.length) > max) return max + 1;
+  let previous = Array.from({ length: b.length + 1 }, (_, index) => index);
+  for (let i = 1; i <= a.length; i++) {
+    const current = [i];
+    for (let j = 1; j <= b.length; j++) {
+      current[j] = Math.min(previous[j] + 1, current[j - 1] + 1, previous[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    }
+    if (Math.min(...current) > max) return max + 1;
+    previous = current;
+  }
+  return previous[b.length];
+}
+
+/**
+ * Exact (case-insensitive) project name, else the only project one typo away,
+ * e.g. "Park Octoper" -> "Park October". Short names and names whose digits
+ * differ ("Tower 1" / "Tower 2") must match exactly.
+ */
+export function matchProjectName(name: string, projects: { id: string; name: string }[]): string | null {
+  const target = normalizeText(name);
+  const exact = projects.find((project) => normalizeText(project.name) === target);
+  if (exact) return exact.id;
+  if (target.length < 8) return null;
+  const digits = (value: string) => value.replace(/\D/g, "");
+  const close = projects.filter((project) => {
+    const candidate = normalizeText(project.name);
+    return digits(candidate) === digits(target) && editDistance(candidate, target, 1) <= 1;
+  });
+  return close.length === 1 ? close[0].id : null;
+}
+
 function clean(value: string | undefined): string {
   return (value ?? "").replace(/\r/g, "").trim();
 }
@@ -445,6 +478,8 @@ export async function syncLeadsFromSheet(input: {
     createdAt: true,
     externalRef: true,
     externalHash: true,
+    assignedToId: true,
+    preferredProjectId: true,
     qualifiedAt: true,
     wonAt: true,
   } as const;
@@ -461,7 +496,6 @@ export async function syncLeadsFromSheet(input: {
 
   const byRef = new Map(linked.map((lead) => [lead.externalRef, lead]));
   const byPhone = new Map(unlinked.map((lead) => [lead.phone, lead]));
-  const projectByName = new Map(projects.map((project) => [normalizeText(project.name), project.id]));
   const users = memberships.map((membership) => membership.user);
 
   const unmatchedConsultants = new Set<string>();
@@ -481,7 +515,7 @@ export async function syncLeadsFromSheet(input: {
 
   const resolveProject = (name: string | null): string | null => {
     if (!name) return null;
-    const id = projectByName.get(normalizeText(name));
+    const id = matchProjectName(name, projects);
     if (!id) unmatchedProjects.add(name);
     return id ?? null;
   };
@@ -503,7 +537,18 @@ export async function syncLeadsFromSheet(input: {
     const preferredProjectId = resolveProject(row.projectName);
 
     if (existing?.externalRef === row.key && existing.externalHash === row.hash) {
-      summary.unchanged++;
+      // The row is unchanged, but a consultant or project added in the ERP since
+      // the last sync can now be linked. Links set by hand are left alone.
+      const links = {
+        ...(assignedToId && !existing.assignedToId ? { assignedToId } : {}),
+        ...(preferredProjectId && !existing.preferredProjectId ? { preferredProjectId } : {}),
+      };
+      if (Object.keys(links).length > 0) {
+        await db.lead.update({ where: { id: existing.id }, data: links });
+        summary.updated++;
+      } else {
+        summary.unchanged++;
+      }
       continue;
     }
 

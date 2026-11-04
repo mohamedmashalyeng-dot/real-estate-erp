@@ -5,6 +5,7 @@ import {
   deriveSheetStage,
   detectSheetColumns,
   mapSheetRow,
+  matchProjectName,
   mergeSheetLeads,
   normalizeSheetPhone,
   parseSheetDateTime,
@@ -132,6 +133,21 @@ describe("sheet parsing", () => {
     expect(merged[0].feedback).toHaveLength(4);
     expect(merged[0].createdAt?.toISOString()).toBe("2026-10-05T22:00:00.000Z");
   });
+
+  it("matches project names exactly or with a single typo", () => {
+    const projects = [
+      { id: "mp", name: "Meeting Point" },
+      { id: "po", name: "Park October" },
+      { id: "t1", name: "Tower 1" },
+    ];
+    expect(matchProjectName("meeting point ", projects)).toBe("mp");
+    expect(matchProjectName("Park Octoper", projects)).toBe("po");
+    expect(matchProjectName("Tower 2", projects)).toBeNull();
+    expect(matchProjectName("Park Octoberrr", projects)).toBeNull();
+    expect(
+      matchProjectName("Park Octobar", [...projects, { id: "po2", name: "Park Octobor" }]),
+    ).toBeNull();
+  });
 });
 
 describe("syncLeadsFromSheet", () => {
@@ -212,5 +228,28 @@ describe("syncLeadsFromSheet", () => {
     const relinked = await prisma.lead.findFirstOrThrow({ where: { organizationId, phone: "+201030032052" } });
     expect(relinked).toMatchObject({ firstName: "منى", externalRef: "gsheet:phone:+201030032052" });
     expect(await prisma.lead.count({ where: { organizationId } })).toBe(3);
+  });
+
+  it("links unchanged rows to a consultant or project added after the first sync", async () => {
+    const role = await prisma.role.findFirstOrThrow({ where: { organizationId } });
+    const symon = await prisma.user.create({
+      data: { name: "Symon", email: `symon-${suffix}@example.test`, passwordHash: "x" },
+    });
+    await prisma.membership.create({ data: { organizationId, userId: symon.id, roleId: role.id } });
+    await prisma.project.create({ data: { organizationId, name: "Park October" } });
+
+    stubSheet([EDITED_FIRST_ROW, ROWS[1].replace("غير معروف,0", "منى,01030032052"), ROWS[2]]);
+    const result = await run();
+    expect(result).toMatchObject({ created: 0, updated: 2, unchanged: 1, unmatchedConsultants: [], unmatchedProjects: [] });
+
+    const mona = await prisma.lead.findFirstOrThrow({ where: { organizationId, phone: "+201030032052" } });
+    expect(mona.assignedToId).toBe(symon.id);
+    const ahmed = await prisma.lead.findFirstOrThrow({
+      where: { organizationId, phone: "+966548364504" },
+      include: { preferredProject: true },
+    });
+    expect(ahmed.preferredProject?.name).toBe("Park October");
+
+    expect(await run()).toMatchObject({ created: 0, updated: 0, unchanged: 3 });
   });
 });
