@@ -1,6 +1,6 @@
 /**
  * Temporary end-to-end smoke check for the data layer:
- *   - Prisma 7 driver adapter against the embedded PostgreSQL cluster
+ *   - Prisma 7 driver adapter against the local MariaDB server
  *   - tenant guard injection + fail-closed cross-tenant blocking
  *   - Decimal / enum / uuid(7) round-trips
  *

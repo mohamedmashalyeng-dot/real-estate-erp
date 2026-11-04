@@ -1,4 +1,4 @@
-import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { PrismaClient } from "@/generated/prisma/client";
 import { env } from "./env";
 import { tenantGuardExtension } from "./tenant";
@@ -14,8 +14,35 @@ const globalForPrisma = globalThis as unknown as {
   __estateiqPrisma?: PrismaClient;
 };
 
+/**
+ * DATABASE_URL is a Prisma-style `mysql://user:password@host:3306/database`
+ * URL (MySQL or MariaDB). It is split into driver options so passwords with
+ * special characters work once URL-encoded.
+ */
+function poolConfig(url: string) {
+  const parsed = new URL(url);
+  return {
+    host: parsed.hostname,
+    port: parsed.port ? Number(parsed.port) : 3306,
+    user: decodeURIComponent(parsed.username),
+    password: decodeURIComponent(parsed.password),
+    database: decodeURIComponent(parsed.pathname.replace(/^\//, "")),
+    connectionLimit: Number(parsed.searchParams.get("connection_limit") ?? 5),
+  };
+}
+
 function createPrismaClient(): PrismaClient {
-  const adapter = new PrismaPg({ connectionString: env.databaseUrl });
+  // Prisma connects on the first query, so DATABASE_URL is only read then:
+  // `next build` imports this module on hosts that inject it at runtime only.
+  let factory: PrismaMariaDb | undefined;
+  const adapter = {
+    provider: "mysql" as const,
+    adapterName: "@prisma/adapter-mariadb",
+    connect() {
+      factory ??= new PrismaMariaDb(poolConfig(env.databaseUrl));
+      return factory.connect();
+    },
+  };
   return new PrismaClient({
     adapter,
     log:

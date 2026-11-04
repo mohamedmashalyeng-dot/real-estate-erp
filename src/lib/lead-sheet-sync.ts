@@ -300,11 +300,14 @@ function matchKeyword<T>(text: string, table: ReadonlyArray<[T, RegExp]>): T | n
   return table.find(([, pattern]) => pattern.test(text))?.[0] ?? null;
 }
 
+/** Plain String columns are VARCHAR(191) on MySQL; longer values fail the whole sync. */
+const VARCHAR_MAX = 191;
+
 function splitName(raw: string): { firstName: string | null; lastName: string } {
   const name = raw.replace(/^[~\s]+/, "").replace(/\s+/g, " ").trim();
   if (!name || UNKNOWN_NAMES.has(name.toLowerCase())) return { firstName: null, lastName: "" };
   const [firstName, ...rest] = name.split(" ");
-  return { firstName, lastName: rest.join(" ") };
+  return { firstName: firstName.slice(0, VARCHAR_MAX), lastName: rest.join(" ").slice(0, VARCHAR_MAX) };
 }
 
 function hashOf(values: unknown): string {
@@ -327,7 +330,8 @@ export function mapSheetRow(
   if (!rawName && !rawPhone && !rawEmail) return null;
 
   const phone = normalizeSheetPhone(rawPhone);
-  const email = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawEmail) ? rawEmail.toLowerCase() : null;
+  const email =
+    rawEmail.length <= VARCHAR_MAX && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawEmail) ? rawEmail.toLowerCase() : null;
   const rowKey = `gsheet:${options.spreadsheetId}:${options.tab.gid ?? "0"}:row:${cell("serial") || options.rowNumber}`;
   const { stage, lostReason } = deriveSheetStage(cell("status"), cell("siteVisit"), cell("qualification"));
 
@@ -650,7 +654,7 @@ export async function syncLeadsFromSheet(input: {
       });
       // Feedback columns are owned by the sheet: replace the previous copies.
       await tx.leadActivity.deleteMany({
-        where: { leadId: existing.id, type: "NOTE", metadata: { path: ["source"], equals: ACTIVITY_SOURCE } },
+        where: { leadId: existing.id, type: "NOTE", metadata: { path: "$.source", equals: ACTIVITY_SOURCE } },
       });
       await tx.leadActivity.createMany({
         data: [

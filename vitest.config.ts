@@ -11,7 +11,7 @@ export default defineConfig({
     environment: "node",
     include: ["tests/**/*.test.ts"],
     globalSetup: ["tests/setup/global-setup.ts"],
-    // Integration tests share one PostgreSQL database: run files sequentially.
+    // Integration tests share one MariaDB database: run files sequentially.
     fileParallelism: false,
     testTimeout: 30_000,
     hookTimeout: 180_000,

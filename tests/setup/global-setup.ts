@@ -2,7 +2,7 @@ import { spawnSync } from "node:child_process";
 import { DEV_DB, ensureCluster, testDatabaseUrl } from "../../scripts/lib/dev-database";
 
 /**
- * Boots the embedded PostgreSQL cluster used by the integration tests and
+ * Boots the local MariaDB server used by the integration tests and
  * applies migrations to the dedicated test database.
  *
  * The test database URL is injected into the test workers through

@@ -42,11 +42,12 @@ export default async function LeadsPage({
 
   if (params.search) {
     const q = params.search.trim();
+    // MySQL/MariaDB collations are case-insensitive, so `contains` already ignores case.
     where.OR = [
-      { firstName: { contains: q, mode: "insensitive" } },
-      { lastName: { contains: q, mode: "insensitive" } },
-      { phone: { contains: q, mode: "insensitive" } },
-      { email: { contains: q, mode: "insensitive" } },
+      { firstName: { contains: q } },
+      { lastName: { contains: q } },
+      { phone: { contains: q } },
+      { email: { contains: q } },
     ];
   }
 

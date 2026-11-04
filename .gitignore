@@ -15,7 +15,8 @@ next-env.d.ts
 .env.local
 .env*.local
 
-# local dev database (embedded postgres cluster + logs)
+# local dev database (MariaDB data dir + logs; .pgdata is the old Postgres cluster)
+/.dbdata/
 /.pgdata/
 /.pgdata-test/
 *.log

@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { defineConfig, env } from "prisma/config";
+import { defineConfig } from "prisma/config";
 
 /**
  * Prisma ORM v7 configuration.
@@ -14,8 +14,9 @@ export default defineConfig({
     seed: "tsx prisma/seed.ts",
   },
   datasource: {
-    // Migrations need a direct connection; Neon's Vercel integration exposes
-    // it as DATABASE_URL_UNPOOLED next to the pooled DATABASE_URL.
-    url: process.env.DATABASE_URL_UNPOOLED || env("DATABASE_URL"),
+    // Not `env()`: that throws when unset, and `prisma generate` (part of
+    // `npm run build`) needs no database, so hosts that only inject
+    // DATABASE_URL at runtime can still build.
+    url: process.env.DATABASE_URL ?? "",
   },
 });

@@ -2,7 +2,7 @@
  * Creates the first real organization and its owner on an empty production
  * database (the demo seed is not safe there: it uses a shared password).
  *
- * Driven by environment variables so it can run during the Vercel build:
+ * Driven by environment variables:
  *   BOOTSTRAP_ORG_NAME        e.g. "WEST Development"            (required)
  *   BOOTSTRAP_OWNER_EMAIL     owner login                         (required)
  *   BOOTSTRAP_OWNER_PASSWORD  at least 12 characters              (required)

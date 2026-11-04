@@ -180,6 +180,8 @@ describe("savePaymentPlanAction", () => {
   });
 
   afterAll(async () => {
+    // MySQL checks RESTRICT keys row by row during a cascade, so sales go first.
+    await prisma.sale.deleteMany({ where: { organizationId } });
     await prisma.organization.delete({ where: { id: organizationId } });
     await prisma.user.deleteMany({ where: { email: { endsWith: `${suffix}@example.test` } } });
     await prisma.$disconnect();
