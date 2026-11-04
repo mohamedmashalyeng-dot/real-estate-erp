@@ -438,6 +438,13 @@ model OrganizationSettings {
   autoCreateFollowUpOnNewLead Boolean      @default(true)
   aiMonthlyTokenBudget        Int          @default(250000)
   features                    Json?
+  // Public Google Sheet the CRM imports leads from (see src/lib/lead-sheet-sync.ts).
+  leadsSheetUrl               String?
+  leadsSheetSyncedAt          DateTime?
+  // Sales calculator sheet: unit prices and payment-plan defaults (see src/lib/pricing-sheet.ts).
+  pricingSheetUrl             String?
+  pricingSheetData            Json?
+  pricingSheetSyncedAt        DateTime?
   createdAt                   DateTime     @default(now())
   updatedAt                   DateTime     @updatedAt
 
@@ -609,6 +616,10 @@ model Lead {
   lastContactedAt    DateTime?
   qualifiedAt        DateTime?
   wonAt              DateTime?
+  // Identity of the external row this lead was imported from (e.g. a Google
+  // Sheet row) and a hash of its content, so re-syncs only touch changed rows.
+  externalRef        String?
+  externalHash       String?
   createdById        String?              @db.Uuid
   createdAt          DateTime             @default(now())
   updatedAt          DateTime             @updatedAt
@@ -625,6 +636,7 @@ model Lead {
   sales        Sale[]
   payments     Payment[]
 
+  @@unique([organizationId, externalRef])
   @@index([organizationId, stage])
   @@index([organizationId, createdAt])
   @@index([organizationId, assignedToId])

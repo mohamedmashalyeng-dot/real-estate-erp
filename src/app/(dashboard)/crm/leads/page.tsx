@@ -1,6 +1,8 @@
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { FileSpreadsheet, Plus } from "lucide-react";
 import { requirePermission } from "@/lib/context";
+import { hasPermission } from "@/lib/permissions";
+import { formatDateTime } from "@/lib/format";
 import { PageHeader } from "@/components/ui/data-display";
 import { Button } from "@/components/ui/button";
 import { Pagination } from "@/components/ui/pagination";
@@ -9,6 +11,7 @@ import { LeadTable } from "@/components/crm/lead-table";
 import { Prisma } from "@/generated/prisma/client";
 import type { LeadSource, LeadStage, LeadTemperature } from "@/generated/prisma/enums";
 import { LEAD_SOURCE_VALUES, LEAD_STAGE_VALUES, LEAD_TEMPERATURE_VALUES } from "./new/schema";
+import { SheetSyncButton } from "./sheet-sync-button";
 
 export const metadata = {
   title: "CRM Leads",
@@ -65,7 +68,7 @@ export default async function LeadsPage({
     }
   }
 
-  const [totalCount, rows] = await Promise.all([
+  const [totalCount, rows, settings] = await Promise.all([
     context.db.lead.count({ where }),
     context.db.lead.findMany({
       where,
@@ -90,7 +93,14 @@ export default async function LeadsPage({
         },
       },
     }),
+    context.db.organizationSettings.findUnique({
+      where: { organizationId: context.organizationId },
+      select: { leadsSheetUrl: true, leadsSheetSyncedAt: true },
+    }),
   ]);
+
+  const canSyncSheet = hasPermission(context.permissions, "leads.create");
+  const canConnectSheet = hasPermission(context.permissions, "settings.manage");
 
   const leads = rows.map((r) => ({
     ...r,
@@ -103,12 +113,26 @@ export default async function LeadsPage({
         title="CRM & Leads"
         description="Monitor lead generation pipeline, assign agents, and track conversion milestones."
         actions={
-          <Button asChild size="sm">
-            <Link href="/crm/leads/new">
-              <Plus className="size-4" />
-              <span>Create Lead</span>
-            </Link>
-          </Button>
+          <>
+            {settings?.leadsSheetUrl && canSyncSheet ? (
+              <SheetSyncButton
+                lastSyncedLabel={settings.leadsSheetSyncedAt ? formatDateTime(settings.leadsSheetSyncedAt) : null}
+              />
+            ) : !settings?.leadsSheetUrl && canConnectSheet ? (
+              <Button asChild size="sm" variant="outline">
+                <Link href="/settings#google-sheet">
+                  <FileSpreadsheet className="size-4" />
+                  <span>Connect Google Sheet</span>
+                </Link>
+              </Button>
+            ) : null}
+            <Button asChild size="sm">
+              <Link href="/crm/leads/new">
+                <Plus className="size-4" />
+                <span>Create Lead</span>
+              </Link>
+            </Button>
+          </>
         }
       />
 

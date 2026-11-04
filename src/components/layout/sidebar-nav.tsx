@@ -7,6 +7,7 @@ import {
   Users,
   Building,
   KeyRound,
+  Calculator,
   Receipt,
   Megaphone,
   Sparkles,
@@ -62,6 +63,12 @@ const NAV_SECTIONS: NavSection[] = [
         permission: "sales.view",
       },
       {
+        title: "Payment Calculator",
+        href: "/sales/calculator",
+        icon: Calculator,
+        permission: "sales.view",
+      },
+      {
         title: "Finance & Plans",
         href: "/finance/installments",
         icon: Receipt,
@@ -103,6 +110,11 @@ const NAV_SECTIONS: NavSection[] = [
 export function SidebarNav({ permissions }: { permissions: string[] }) {
   const pathname = usePathname();
   const permSet = new Set(permissions);
+  // Highlight only the most specific match (e.g. /sales/calculator, not /sales too).
+  const activeHref = NAV_SECTIONS.flatMap((section) => section.items)
+    .map((item) => item.href)
+    .filter((href) => pathname === href || (href !== "/dashboard" && pathname.startsWith(`${href}/`)))
+    .sort((a, b) => b.length - a.length)[0];
 
   return (
     <nav className="flex flex-1 flex-col gap-5 px-3 py-4">
@@ -120,9 +132,7 @@ export function SidebarNav({ permissions }: { permissions: string[] }) {
               </p>
             ) : null}
             {visibleItems.map((item) => {
-              const active =
-                pathname === item.href ||
-                (item.href !== "/dashboard" && pathname.startsWith(item.href));
+              const active = item.href === activeHref;
               const Icon = item.icon;
 
               return (

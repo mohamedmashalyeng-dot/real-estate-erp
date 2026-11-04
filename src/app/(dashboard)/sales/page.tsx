@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CheckCircle2, Clock, FileSignature, KeyRound } from "lucide-react";
+import { Calculator, CheckCircle2, Clock, FileSignature, KeyRound } from "lucide-react";
 import { Badge, PageHeader, StatCard, Table, TableShell, TBody, TD, TH, THead, TR } from "@/components/ui/data-display";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireOrganization } from "@/lib/context";
-import { hasAnyPermission } from "@/lib/permissions";
+import { hasAnyPermission, hasPermission } from "@/lib/permissions";
 import { formatDate, formatMoney, formatNumber } from "@/lib/format";
 
 export const metadata = { title: "Reservations & Sales" };
@@ -46,6 +47,16 @@ export default async function SalesPage() {
       <PageHeader
         title="Reservations & Sales"
         description="Track reservation holds, approval queues, contracted deals, and salesperson ownership."
+        actions={
+          hasPermission(context.permissions, "sales.view") ? (
+            <Button asChild size="sm" variant="outline">
+              <Link href="/sales/calculator">
+                <Calculator className="size-4" />
+                <span>Payment Calculator</span>
+              </Link>
+            </Button>
+          ) : null
+        }
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

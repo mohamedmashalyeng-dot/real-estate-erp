@@ -1,10 +1,12 @@
 import { notFound } from "next/navigation";
 import { Building2, Clock, CreditCard, Settings } from "lucide-react";
 import { Badge, DefinitionList, PageHeader, StatCard } from "@/components/ui/data-display";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireOrganization } from "@/lib/context";
 import { hasPermission } from "@/lib/permissions";
-import { formatDate, formatNumber } from "@/lib/format";
+import { formatDate, formatDateTime, formatNumber } from "@/lib/format";
+import { savePricingSheetUrlAction, saveLeadsSheetUrlAction } from "./actions";
+import { SheetLinkForm } from "./sheet-link-form";
 
 export const metadata = { title: "Settings" };
 
@@ -44,6 +46,44 @@ export default async function SettingsPage() {
               { label: "Auto Follow-up", value: settings?.autoCreateFollowUpOnNewLead ? "Enabled" : "Disabled" },
               { label: "Token Budget", value: formatNumber(settings?.aiMonthlyTokenBudget ?? 0) },
             ]}
+          />
+        </CardContent>
+      </Card>
+
+      <Card id="google-sheet">
+        <CardHeader>
+          <CardTitle>Google Sheet Leads</CardTitle>
+          <CardDescription>
+            Import the sales team&apos;s lead tracker into CRM. Use &quot;Sync Google Sheet&quot; on the Leads page to pull new and edited rows.
+            {settings?.leadsSheetUrl ? ` Last synced: ${formatDateTime(settings.leadsSheetSyncedAt)}.` : ""}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <SheetLinkForm
+            id="leads-sheet-url"
+            label="Google Sheet link"
+            hint='The sheet must be shared as "Anyone with the link" (Viewer). Every tab with "New lead" and "Phone" columns is imported; other tabs are ignored.'
+            currentUrl={settings?.leadsSheetUrl ?? null}
+            action={saveLeadsSheetUrlAction}
+          />
+        </CardContent>
+      </Card>
+
+      <Card id="pricing-sheet">
+        <CardHeader>
+          <CardTitle>Payment Calculator Sheet</CardTitle>
+          <CardDescription>
+            Unit prices (price per m² by area, add-ons) and default plan terms for the Payment Calculator are read from this sheet. Refresh them from the calculator page whenever the sheet changes.
+            {settings?.pricingSheetUrl ? ` Last read: ${formatDateTime(settings.pricingSheetSyncedAt)}.` : ""}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <SheetLinkForm
+            id="pricing-sheet-url"
+            label="Calculator sheet link"
+            hint='Shared as "Anyone with the link" (Viewer), with the "Sales Payment Calculator" layout: Unit area, Price per m², Contract payment, Down payment, Annual payment rate...'
+            currentUrl={settings?.pricingSheetUrl ?? null}
+            action={savePricingSheetUrlAction}
           />
         </CardContent>
       </Card>

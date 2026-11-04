@@ -115,7 +115,10 @@ export function LeadProfileCard({
               label: "Campaign",
               value: lead.campaign ? `${lead.campaign.name} (${lead.campaign.platform})` : "—",
             },
-            { label: "Notes", value: lead.notes ?? "—" },
+            {
+              label: "Notes",
+              value: lead.notes ? <span className="block whitespace-pre-wrap">{lead.notes}</span> : "—",
+            },
           ]}
         />
       </CardContent>
