@@ -27,7 +27,7 @@ export function AppShell({
   return (
     <div className="flex min-h-screen bg-background">
       {/* Desktop Sidebar */}
-      <aside className="hidden w-64 flex-col border-r border-sidebar-border bg-sidebar md:flex">
+      <aside className="hidden w-64 flex-col border-r border-sidebar-border bg-sidebar md:flex print:hidden">
         {/* Brand header */}
         <div className="flex h-14 items-center justify-between border-b border-sidebar-border px-4">
           <Link href="/dashboard" className="flex items-center gap-2 font-semibold tracking-tight text-foreground">
@@ -97,9 +97,9 @@ export function AppShell({
       ) : null}
 
       {/* Main Content Area */}
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex flex-1 flex-col overflow-hidden print:overflow-visible">
         {/* Mobile top bar */}
-        <header className="flex h-14 items-center justify-between border-b border-border bg-card px-4 md:hidden">
+        <header className="flex h-14 items-center justify-between border-b border-border bg-card px-4 md:hidden print:hidden">
           <Button
             variant="ghost"
             size="icon-sm"
@@ -116,7 +116,7 @@ export function AppShell({
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 print:overflow-visible print:p-0">
           {children}
         </main>
       </div>

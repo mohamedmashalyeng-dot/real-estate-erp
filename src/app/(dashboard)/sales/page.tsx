@@ -106,7 +106,7 @@ export default async function SalesPage() {
               <TBody>
                 {sales.map((sale) => (
                   <TR key={sale.id}>
-                    <TD className="font-medium">{sale.reference}</TD>
+                    <TD className="font-medium"><Link href={`/finance/sales/${sale.id}`} className="hover:text-primary">{sale.reference}</Link></TD>
                     <TD>
                       <Link href={`/crm/leads/${sale.lead.id}`} className="hover:text-primary">
                         {sale.lead.firstName} {sale.lead.lastName}
