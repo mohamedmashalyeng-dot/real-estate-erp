@@ -5,7 +5,7 @@ import { Badge, EmptyState, PageHeader, StatCard, Table, TableShell, TBody, TD, 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireOrganization } from "@/lib/context";
 import { hasAnyPermission, hasPermission } from "@/lib/permissions";
-import { formatDate, formatMoney, formatNumber } from "@/lib/format";
+import { formatDate, formatMoney, formatNumber, titleCase } from "@/lib/format";
 import { AGING_BUCKETS, agingReport, daysOverdue, fromCents, remainingCents, startOfDay, syncInstallmentStatuses } from "@/lib/collections";
 import { cn } from "@/lib/utils";
 import type { InstallmentStatus } from "@/generated/prisma/enums";
@@ -185,7 +185,7 @@ export default async function InstallmentsPage({
                           {formatDate(installment.dueDate)}
                           {late ? <div className="text-xs text-destructive">{late} days late</div> : null}
                         </TD>
-                        <TD><Badge tone={statusTone(installment.status)}>{installment.status.replace("_", " ")}</Badge></TD>
+                        <TD><Badge tone={statusTone(installment.status)}>{installment.status}</Badge></TD>
                         <TD align="right">{formatMoney(installment.amount, installment.paymentPlan.currency)}</TD>
                         <TD align="right">{formatMoney(fromCents(remaining), installment.paymentPlan.currency)}</TD>
                         {canRecord ? (
@@ -230,7 +230,7 @@ export default async function InstallmentsPage({
                       <Link href={`/finance/sales/${payment.sale.id}`} className="hover:text-primary">{payment.sale.reference}</Link>
                     </TD>
                     <TD>{payment.installment?.sequence ?? "-"}</TD>
-                    <TD>{payment.method.replace("_", " ")}</TD>
+                    <TD>{titleCase(payment.method)}</TD>
                     <TD>{payment.reference ?? "-"}</TD>
                     <TD>{payment.receivedBy?.name ?? "-"}</TD>
                     <TD align="right">{formatMoney(payment.amount, payment.currency)}</TD>

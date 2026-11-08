@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { requireOrganization } from "@/lib/context";
 import { hasPermission } from "@/lib/permissions";
-import { LeadHeader, LeadProfileCard } from "./lead-profile";
+import { LeadAssignmentCard, LeadHeader, LeadProfileCard } from "./lead-profile";
 import { LeadTimeline } from "./lead-timeline";
 import { LeadQualificationCard } from "./lead-sidecards";
 
@@ -61,9 +61,9 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
 
   return (
     <div className="space-y-6">
-      <LeadHeader lead={lead} agents={agents} canUpdate={canUpdate} />
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="min-w-0 space-y-4">
+      <LeadHeader lead={lead} canUpdate={canUpdate} />
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="min-w-0 space-y-6">
           <LeadProfileCard lead={lead} />
           <LeadTimeline
             leadId={lead.id}
@@ -73,7 +73,8 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
             canManageFollowUps={canManageFollowUps}
           />
         </div>
-        <div className="space-y-4">
+        <div className="space-y-6">
+          {canUpdate ? <LeadAssignmentCard leadId={lead.id} assignedToId={lead.assignedToId} agents={agents} /> : null}
           <LeadQualificationCard lead={lead} pendingCount={pendingCount} canUpdate={canUpdate} />
         </div>
       </div>

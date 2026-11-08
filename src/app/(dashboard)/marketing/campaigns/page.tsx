@@ -4,7 +4,7 @@ import { Badge, PageHeader, StatCard, Table, TableShell, TBody, TD, TH, THead, T
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireOrganization } from "@/lib/context";
 import { hasPermission } from "@/lib/permissions";
-import { formatDate, formatMoney, formatNumber } from "@/lib/format";
+import { formatDate, formatMoney, formatNumber, titleCase } from "@/lib/format";
 
 export const metadata = { title: "Marketing Campaigns" };
 
@@ -50,7 +50,7 @@ export default async function CampaignsPage() {
                 {campaigns.map((campaign) => (
                   <TR key={campaign.id}>
                     <TD className="font-medium">{campaign.name}</TD>
-                    <TD>{campaign.platform}</TD>
+                    <TD>{titleCase(campaign.platform)}</TD>
                     <TD><Badge tone={campaign.status === "ACTIVE" ? "success" : campaign.status === "PAUSED" ? "warning" : "neutral"}>{campaign.status}</Badge></TD>
                     <TD>{formatDate(campaign.startDate)}</TD>
                     <TD>{formatDate(campaign.endDate)}</TD>

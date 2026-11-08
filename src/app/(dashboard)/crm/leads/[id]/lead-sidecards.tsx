@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/data-display";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatDateTime, formatRelative } from "@/lib/format";
+import { formatDateTime, formatRelative, titleCase } from "@/lib/format";
 import { LeadScoreForm } from "./lead-score-form";
 
 export function LeadQualificationCard({
@@ -50,7 +50,7 @@ export function LeadQualificationCard({
         </div>
         <div className="flex items-center justify-between">
           <span className="text-muted-foreground">Source</span>
-          <span className="font-medium text-foreground">{lead.source}</span>
+          <span className="font-medium text-foreground">{titleCase(lead.source)}</span>
         </div>
         <div className="flex items-center justify-between">
           <span className="text-muted-foreground">Pending follow-ups</span>

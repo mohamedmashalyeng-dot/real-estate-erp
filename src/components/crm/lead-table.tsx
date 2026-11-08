@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/data-display";
 import { Table, TableShell, TBody, TD, TH, THead, TR, EmptyState } from "@/components/ui/data-display";
-import { formatDate, formatMoney } from "@/lib/format";
+import { formatDate, formatMoney, titleCase } from "@/lib/format";
 import { Users, Phone, Mail, Sparkles } from "lucide-react";
 
 export interface LeadListItem {
@@ -121,7 +121,7 @@ export function LeadTable({ leads }: { leads: LeadListItem[] }) {
                 </span>
               </TD>
               <TD>
-                <span className="text-xs text-muted-foreground">{lead.source}</span>
+                <span className="text-xs text-muted-foreground">{titleCase(lead.source)}</span>
               </TD>
               <TD>
                 <span className="text-xs text-muted-foreground">{formatDate(lead.createdAt)}</span>

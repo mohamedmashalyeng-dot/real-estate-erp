@@ -40,18 +40,18 @@ export function OrgSwitcher({
         <button
           type="button"
           disabled={isPending}
-          className="flex w-full items-center justify-between gap-2 rounded-md border border-sidebar-border bg-sidebar-accent/50 px-2.5 py-2 text-left text-xs text-sidebar-foreground transition hover:bg-sidebar-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring disabled:opacity-50"
+          className="flex w-full items-center justify-between gap-2 rounded-lg border border-sidebar-border bg-sidebar-accent/60 px-2.5 py-2 text-left text-xs text-sidebar-foreground transition hover:bg-sidebar-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring disabled:opacity-50"
         >
           <div className="flex min-w-0 items-center gap-2">
-            <div className="flex size-6 shrink-0 items-center justify-center rounded bg-primary text-primary-foreground font-semibold text-[11px]">
+            <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground font-semibold text-[11px]">
               {current?.organizationName?.[0]?.toUpperCase() ?? "O"}
             </div>
             <div className="min-w-0 truncate">
               <p className="truncate font-medium leading-none">{current?.organizationName ?? "Select Org"}</p>
-              <p className="mt-1 truncate text-[11px] text-muted-foreground">{current?.roleName ?? "Member"}</p>
+              <p className="mt-1 truncate text-[11px] text-sidebar-muted">{current?.roleName ?? "Member"}</p>
             </div>
           </div>
-          <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" />
+          <ChevronsUpDown className="size-4 shrink-0 text-sidebar-muted" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-60">

@@ -5,7 +5,7 @@ import { Badge, DefinitionList, EmptyState, PageHeader, StatCard, Table, TableSh
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireOrganization } from "@/lib/context";
 import { hasAnyPermission, hasPermission } from "@/lib/permissions";
-import { formatDate, formatMoney, formatPercent } from "@/lib/format";
+import { formatDate, formatMoney, formatPercent, titleCase } from "@/lib/format";
 import { daysOverdue, fromCents, remainingCents, syncInstallmentStatuses, toCents } from "@/lib/collections";
 import { RecordPaymentDialog } from "../../record-payment-dialog";
 import { PrintButton } from "../../print-button";
@@ -83,7 +83,7 @@ export default async function SaleStatementPage({ params }: { params: Promise<{ 
             items={[
               { label: "Customer", value: <Link href={`/crm/leads/${sale.lead.id}`} className="hover:text-primary">{sale.lead.firstName} {sale.lead.lastName}</Link> },
               { label: "Phone", value: sale.lead.phone },
-              { label: "Unit", value: `${sale.unit.unitCode} · ${sale.unit.type} · ${sale.unit.areaSqm.toString()} m²` },
+              { label: "Unit", value: `${sale.unit.unitCode} · ${titleCase(sale.unit.type)} · ${sale.unit.areaSqm.toString()} m²` },
               { label: "Salesperson", value: sale.salesperson.name },
               { label: "Sale date", value: formatDate(sale.saleDate) },
               { label: "Status", value: <Badge tone={sale.status === "CANCELLED" ? "danger" : "primary"}>{sale.status}</Badge> },
@@ -130,7 +130,7 @@ export default async function SaleStatementPage({ params }: { params: Promise<{ 
                         </TD>
                         <TD>
                           <Badge tone={installment.status === "PAID" ? "success" : installment.status === "OVERDUE" ? "danger" : installment.status === "UPCOMING" ? "neutral" : "warning"}>
-                            {installment.status.replace("_", " ")}
+                            {installment.status}
                           </Badge>
                         </TD>
                         <TD align="right">{formatMoney(installment.amount, currency)}</TD>
@@ -175,7 +175,7 @@ export default async function SaleStatementPage({ params }: { params: Promise<{ 
                     <TR key={payment.id}>
                       <TD>{formatDate(payment.paidAt)}</TD>
                       <TD>{payment.installment ? `#${payment.installment.sequence}` : "-"}</TD>
-                      <TD>{payment.method.replace("_", " ")}</TD>
+                      <TD>{titleCase(payment.method)}</TD>
                       <TD>{payment.reference ?? "-"}</TD>
                       <TD>{payment.receivedBy?.name ?? "-"}</TD>
                       <TD align="right">{formatMoney(payment.amount, payment.currency)}</TD>

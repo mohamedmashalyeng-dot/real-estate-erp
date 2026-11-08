@@ -124,7 +124,7 @@ export function SidebarNav({ permissions }: { permissions: string[] }) {
     .sort((a, b) => b.length - a.length)[0];
 
   return (
-    <nav className="flex flex-1 flex-col gap-5 px-3 py-4">
+    <nav className="flex flex-1 flex-col gap-6 overflow-y-auto px-3 py-5 scrollbar-thin">
       {NAV_SECTIONS.map((section, idx) => {
         const visibleItems = section.items.filter(
           (item) => !item.permission || permSet.has(item.permission),
@@ -132,9 +132,9 @@ export function SidebarNav({ permissions }: { permissions: string[] }) {
         if (visibleItems.length === 0) return null;
 
         return (
-          <div key={idx} className="flex flex-col gap-1">
+          <div key={idx} className="flex flex-col gap-0.5">
             {section.title ? (
-              <p className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/60">
+              <p className="px-3 pb-1.5 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-sidebar-muted">
                 {section.title}
               </p>
             ) : null}
@@ -146,15 +146,24 @@ export function SidebarNav({ permissions }: { permissions: string[] }) {
                 <Link
                   key={item.href}
                   href={item.href}
+                  aria-current={active ? "page" : undefined}
                   className={cn(
-                    "group flex items-center justify-between rounded-md px-2.5 py-1.5 text-xs font-medium transition",
+                    "group relative flex items-center justify-between rounded-lg px-3 py-2 text-[13px] font-medium transition-colors",
                     active
-                      ? "bg-sidebar-primary text-sidebar-primary-foreground font-semibold shadow-xs"
-                      : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                      : "text-sidebar-foreground/75 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
                   )}
                 >
-                  <div className="flex items-center gap-2.5">
-                    <Icon className={cn("size-4 shrink-0", active ? "text-sidebar-primary-foreground" : "text-sidebar-foreground/70 group-hover:text-sidebar-accent-foreground")} />
+                  {active ? (
+                    <span className="absolute inset-y-1.5 left-0 w-[3px] rounded-r-full bg-sidebar-primary" />
+                  ) : null}
+                  <div className="flex items-center gap-3">
+                    <Icon
+                      className={cn(
+                        "size-[18px] shrink-0 transition-colors",
+                        active ? "text-sidebar-primary" : "text-sidebar-muted group-hover:text-sidebar-accent-foreground",
+                      )}
+                    />
                     <span>{item.title}</span>
                   </div>
                   {item.badge ? (

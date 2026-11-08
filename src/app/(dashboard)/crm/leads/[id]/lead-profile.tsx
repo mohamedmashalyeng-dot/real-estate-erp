@@ -1,9 +1,7 @@
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { PageHeader } from "@/components/ui/data-display";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DefinitionList } from "@/components/ui/data-display";
-import { formatMoney } from "@/lib/format";
+import { formatDate, formatMoney, titleCase } from "@/lib/format";
 import { LeadStageSelector } from "./stage-selector";
 import { LeadAssignForm } from "./assign-form";
 
@@ -17,46 +15,46 @@ interface LeadHeaderProps {
     createdBy: { name: string } | null;
     assignedToId: string | null;
   };
-  agents: { id: string; name: string }[];
   canUpdate: boolean;
 }
 
-export function LeadHeader({ lead, agents, canUpdate }: LeadHeaderProps) {
+export function LeadHeader({ lead, canUpdate }: LeadHeaderProps) {
   return (
     <>
       <PageHeader
         title={`${lead.firstName} ${lead.lastName}`}
-        description={`Lead profile · created ${lead.createdAt.toDateString()}${
+        breadcrumbs={[{ label: "CRM & Leads", href: "/crm/leads" }, { label: `${lead.firstName} ${lead.lastName}` }]}
+        description={`Lead profile · created ${formatDate(lead.createdAt)}${
           lead.createdBy ? ` by ${lead.createdBy.name}` : ""
         }`}
         actions={
           <div className="flex items-center gap-3">
-            <Link
-              href="/crm/leads"
-              className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
-            >
-              <ArrowLeft className="size-3.5" /> Back to leads
-            </Link>
             <LeadStageSelector leadId={lead.id} currentStage={lead.stage} canUpdate={canUpdate} />
           </div>
         }
       />
-      {canUpdate ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Assignment</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <LeadAssignForm
-              leadId={lead.id}
-              agents={agents}
-              currentAssigneeId={lead.assignedToId}
-              canAssign={canUpdate}
-            />
-          </CardContent>
-        </Card>
-      ) : null}
     </>
+  );
+}
+
+export function LeadAssignmentCard({
+  leadId,
+  assignedToId,
+  agents,
+}: {
+  leadId: string;
+  assignedToId: string | null;
+  agents: { id: string; name: string }[];
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Assignment</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <LeadAssignForm leadId={leadId} agents={agents} currentAssigneeId={assignedToId} canAssign />
+      </CardContent>
+    </Card>
   );
 }
 
@@ -106,14 +104,14 @@ export function LeadProfileCard({
             },
             {
               label: "Preference",
-              value: `${lead.propertyType ?? "Any type"}${lead.bedrooms ? ` · ${lead.bedrooms} BR` : ""}${
+              value: `${lead.propertyType ? titleCase(lead.propertyType) : "Any type"}${lead.bedrooms ? ` · ${lead.bedrooms} BR` : ""}${
                 lead.preferredLocation ? ` · ${lead.preferredLocation}` : ""
               }`,
             },
             { label: "Project", value: lead.preferredProject?.name ?? "—" },
             {
               label: "Campaign",
-              value: lead.campaign ? `${lead.campaign.name} (${lead.campaign.platform})` : "—",
+              value: lead.campaign ? `${lead.campaign.name} (${titleCase(lead.campaign.platform)})` : "—",
             },
             {
               label: "Notes",

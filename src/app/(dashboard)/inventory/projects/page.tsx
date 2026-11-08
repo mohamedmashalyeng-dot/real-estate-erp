@@ -4,7 +4,7 @@ import { Badge, PageHeader, StatCard, Table, TableShell, TBody, TD, TH, THead, T
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireOrganization } from "@/lib/context";
 import { hasAnyPermission, hasPermission } from "@/lib/permissions";
-import { formatArea, formatMoney, formatNumber } from "@/lib/format";
+import { formatArea, formatMoney, formatNumber, titleCase } from "@/lib/format";
 
 export const metadata = { title: "Projects & Units" };
 
@@ -82,7 +82,7 @@ export default async function ProjectsPage() {
                     <TR key={unit.id}>
                       <TD className="font-medium">{unit.unitCode}</TD>
                       <TD>{unit.project.name}</TD>
-                      <TD>{unit.type}{unit.bedrooms ? ` - ${unit.bedrooms} BR` : ""}</TD>
+                      <TD>{titleCase(unit.type)}{unit.bedrooms ? ` · ${unit.bedrooms} BR` : ""}</TD>
                       <TD>{formatArea(unit.areaSqm)}</TD>
                       <TD>
                         <Badge tone={unit.status === "AVAILABLE" ? "success" : unit.status === "RESERVED" ? "warning" : "neutral"}>
