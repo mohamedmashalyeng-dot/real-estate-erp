@@ -7,6 +7,7 @@ import { Select } from "@/components/ui/form-controls";
 import { Button } from "@/components/ui/button";
 import { FieldError } from "@/components/ui/form-controls";
 import { LEAD_STAGES } from "@/lib/constants";
+import { titleCase } from "@/lib/format";
 import { updateLeadStageAction } from "../actions";
 
 function StageSubmit() {
@@ -44,7 +45,7 @@ export function LeadStageSelector({
   );
 
   if (!canUpdate) {
-    return <span className="text-xs font-semibold text-foreground">{currentStage}</span>;
+    return <span className="text-xs font-semibold text-foreground">{titleCase(currentStage)}</span>;
   }
 
   return (
@@ -53,7 +54,7 @@ export function LeadStageSelector({
       <Select name="stage" defaultValue={currentStage} className="h-8 w-36 text-xs font-semibold">
         {LEAD_STAGES.map((stage) => (
           <option key={stage} value={stage}>
-            {stage}
+            {titleCase(stage)}
           </option>
         ))}
       </Select>

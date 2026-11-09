@@ -82,7 +82,7 @@ function initialForm(defaults: PlanSettings, pricing: PricingSheetData | null): 
 }
 
 const STATUS_TONE = { SAFE: "success", OUTSIDE: "warning", INVALID: "danger" } as const;
-const STATUS_LABEL = { SAFE: "SAFE — target met", OUTSIDE: "OUTSIDE — below target", INVALID: "INVALID — review inputs" };
+const STATUS_HINT = { SAFE: "Handover target met", OUTSIDE: "Below the handover target", INVALID: "Review the plan inputs" };
 
 export function PaymentCalculator({
   defaults,
@@ -128,6 +128,8 @@ export function PaymentCalculator({
     : unitPrice({ areaSqm: toNumber(form.areaSqm), pricePerSqm: toNumber(form.pricePerSqm), extras: toNumber(form.extras) });
   const result = calculatePaymentPlan({ ...settings, totalPrice });
   const status = validation.success ? result.handover.status : "INVALID";
+  // A blank price-list quote is not an error yet; wait for the price before judging the plan.
+  const awaitingPrice = !sale && totalPrice <= 0;
   const quarterly = form.frequency === "QUARTERLY";
 
   const onAreaChange = (value: string) => {
@@ -228,10 +230,10 @@ export function PaymentCalculator({
             <FormField label="Annual payment (%)" htmlFor="calc-annual" hint="Of the opening balance at its due date">
               <Input id="calc-annual" type="number" min={0} max={100} value={form.annualRatePercent} onChange={(event) => set("annualRatePercent", event.target.value)} />
             </FormField>
-            <FormField label="Annual payment timing" htmlFor="calc-timing">
+            <FormField label="Annual payment timing" htmlFor="calc-timing" hint={form.annualTiming === "START" ? "Months 1, 13, 25…" : "Months 12, 24, 36…"}>
               <Select id="calc-timing" value={form.annualTiming} onChange={(event) => set("annualTiming", event.target.value as AnnualTiming)}>
-                <option value="START">Start of year (1, 13, 25…)</option>
-                <option value="END">End of year (12, 24, 36…)</option>
+                <option value="START">Start of year</option>
+                <option value="END">End of year</option>
               </Select>
             </FormField>
             <FormField label="Installments" htmlFor="calc-frequency">
@@ -281,7 +283,7 @@ export function PaymentCalculator({
       </Card>
 
       <div className="min-w-0 space-y-6">
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-4">
           <StatCard label="Total unit price" value={money(result.totalPrice)} hint={sale ? `Contract value of ${sale.reference}` : undefined} />
           <StatCard
             label={quarterly ? "Quarterly installment" : "Monthly installment"}
@@ -289,12 +291,22 @@ export function PaymentCalculator({
             hint={quarterly ? `${money(result.monthlyInstallment)} monthly equivalent` : undefined}
           />
           <StatCard label="Paid by handover" value={formatPercent(result.handover.paidPercent, 2)} hint={`Target ${formatPercent(settings.targetPercent, 0)}`} />
-          <div className="rounded-lg border border-border bg-card px-4 py-3">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Sales status</p>
-            <div className="mt-3">
-              <Badge tone={STATUS_TONE[status]} className="text-xs">{STATUS_LABEL[status]}</Badge>
+          <div className="rounded-xl border border-border bg-card px-4 py-4 shadow-card">
+            <p className="text-[13px] font-medium text-muted-foreground">Sales status</p>
+            <div className="mt-2">
+              {awaitingPrice ? (
+                <Badge className="text-xs">Waiting for price</Badge>
+              ) : (
+                <Badge tone={STATUS_TONE[status]} dot className="text-xs">{status}</Badge>
+              )}
             </div>
-            {!validation.success ? <p className="mt-2 text-xs text-muted-foreground">{validation.error.issues[0]?.message}</p> : null}
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              {awaitingPrice
+                ? "Enter the unit area and price per m²"
+                : validation.success
+                  ? STATUS_HINT[status]
+                  : (validation.error.issues[0]?.message ?? STATUS_HINT.INVALID)}
+            </p>
           </div>
         </div>
 
@@ -335,9 +347,9 @@ export function PaymentCalculator({
           </CardHeader>
           <CardContent>
             <TableShell>
-              <Table>
+              <Table className="min-w-[540px]">
                 <THead>
-                  <TR><TH>Contract year</TH><TH align="right">Annual payment</TH><TH align="right">Installments</TH><TH align="right">Installments total</TH><TH align="right">Total paid in year</TH></TR>
+                  <TR><TH>Year</TH><TH align="right">Annual payment</TH><TH align="right">Installments</TH><TH align="right">Installments value</TH><TH align="right">Year total</TH></TR>
                 </THead>
                 <TBody>
                   {result.years.map((year) => (

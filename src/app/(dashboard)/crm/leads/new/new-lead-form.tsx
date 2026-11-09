@@ -6,6 +6,7 @@ import { FormField, FormRow, Input, Select, Textarea } from "@/components/ui/for
 import { Button } from "@/components/ui/button";
 import { FieldError } from "@/components/ui/form-controls";
 import { LEAD_SOURCES } from "@/lib/constants";
+import { titleCase } from "@/lib/format";
 import { createLeadAction } from "./actions";
 
 const initialState: { ok: boolean; error?: string; fieldErrors?: Record<string, string[]> } = {
@@ -73,7 +74,7 @@ export function NewLeadForm({
           <Select id="source" name="source" defaultValue="OTHER">
             {LEAD_SOURCES.map((source) => (
               <option key={source} value={source}>
-                {source}
+                {titleCase(source)}
               </option>
             ))}
           </Select>

@@ -263,7 +263,7 @@ export default async function DashboardPage() {
         {canLeads ? (
           <Card>
             <CardHeader className="flex-row items-center justify-between">
-              <CardTitle>Follow-ups due today</CardTitle>
+              <CardTitle>Follow-ups due &amp; overdue</CardTitle>
               <Badge tone={followUps.some((item) => item.dueAt < startOfDay(now)) ? "danger" : "primary"}>
                 {formatNumber(followUps.length)}
               </Badge>

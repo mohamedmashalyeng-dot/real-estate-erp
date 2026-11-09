@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/form-controls";
 import { requireOrganization } from "@/lib/context";
 import { hasPermission } from "@/lib/permissions";
-import { formatMoney, formatNumber, formatPercent, pluralize, titleCase } from "@/lib/format";
+import { formatDate, formatMoney, formatMonth, formatNumber, formatPercent, pluralize, titleCase } from "@/lib/format";
 import { buildReport, formatDay, ratio, resolveRange, type ReportExport } from "@/lib/reports";
 
 export const metadata = { title: "Reports" };
@@ -23,7 +23,7 @@ function presets(now: Date) {
 }
 
 function percent(value: number | null) {
-  return value === null ? "-" : formatPercent(value);
+  return value === null ? "—" : formatPercent(value);
 }
 
 function ExportLink({ kind, from, to }: { kind: ReportExport; from: string; to: string }) {
@@ -57,6 +57,7 @@ export default async function ReportsPage({
   const range = resolveRange(await searchParams, now);
   const report = await buildReport(context.db, range, now);
   const { fromDay, toDay } = range;
+  const lastDay = new Date(range.to.getFullYear(), range.to.getMonth(), range.to.getDate() - 1);
   const currency = context.currency;
 
   const funnelMax = Math.max(...report.funnel.map((row) => row.count), 0);
@@ -66,7 +67,7 @@ export default async function ReportsPage({
     <div className="space-y-6">
       <PageHeader
         title="Reports"
-        description={`Sales, leads, marketing and collections from ${fromDay} to ${toDay}.`}
+        description={`Sales, leads, marketing and collections from ${formatDate(range.from)} to ${formatDate(lastDay)}.`}
       />
 
       <Card className="print:hidden">
@@ -127,7 +128,7 @@ export default async function ReportsPage({
         />
       </div>
 
-      <div className="grid gap-6 2xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 2xl:grid-cols-2">
         <Card>
           <CardHeader><CardTitle>Pipeline funnel</CardTitle></CardHeader>
           <CardContent className="space-y-2.5">
@@ -240,11 +241,11 @@ export default async function ReportsPage({
                       <TD align="right">{formatMoney(row.cost, row.currency)}</TD>
                       <TD align="right">{formatNumber(row.leads)}</TD>
                       <TD align="right">{formatNumber(row.won)}</TD>
-                      <TD align="right">{row.costPerLead ? formatMoney(row.costPerLead, row.currency) : "-"}</TD>
-                      <TD align="right">{row.costPerSale ? formatMoney(row.costPerSale, row.currency) : "-"}</TD>
+                      <TD align="right">{row.costPerLead ? formatMoney(row.costPerLead, row.currency) : "—"}</TD>
+                      <TD align="right">{row.costPerSale ? formatMoney(row.costPerSale, row.currency) : "—"}</TD>
                       <TD align="right">{formatMoney(row.salesValue, currency)}</TD>
                       <TD align="right">
-                        {row.roiMultiple === null ? "-" : (
+                        {row.roiMultiple === null ? "—" : (
                           <Badge tone={row.roiMultiple >= 1 ? "success" : "danger"}>{row.roiMultiple.toFixed(1)}x</Badge>
                         )}
                       </TD>
@@ -278,7 +279,7 @@ export default async function ReportsPage({
               <TBody>
                 {report.collections.map((row) => (
                   <TR key={row.month}>
-                    <TD className="font-medium">{row.month}</TD>
+                    <TD className="font-medium whitespace-nowrap">{formatMonth(row.month)}</TD>
                     <TD>
                       <div className="space-y-1">
                         <Bar value={Number(row.dueAmount)} max={collectionMax} tone="bg-muted-foreground/40" />
@@ -288,7 +289,7 @@ export default async function ReportsPage({
                     <TD align="right">{formatMoney(row.dueAmount, currency)}</TD>
                     <TD align="right">{formatMoney(row.collectedAmount, currency)}</TD>
                     <TD align="right">
-                      {row.ratePercent === null ? "-" : (
+                      {row.ratePercent === null ? "—" : (
                         <Badge tone={row.ratePercent >= 90 ? "success" : row.ratePercent >= 60 ? "warning" : "danger"}>
                           {formatPercent(row.ratePercent)}
                         </Badge>

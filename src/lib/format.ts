@@ -47,28 +47,35 @@ export function formatArea(value: Numeric): string {
   return `${formatNumber(toNumber(value), 0)} m²`;
 }
 
+const DAY_MONTH_YEAR = new Intl.DateTimeFormat("en-US", { day: "2-digit", month: "short", year: "numeric" });
+const MONTH_YEAR = new Intl.DateTimeFormat("en-US", { month: "short", year: "numeric" });
+const TIME_24H = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit" });
+
+/** "15 Sep 2026". en-GB would print "Sept", so the parts come from en-US and are reordered. */
+function dayMonthYear(date: Date): string {
+  const parts = Object.fromEntries(DAY_MONTH_YEAR.formatToParts(date).map((part) => [part.type, part.value]));
+  return `${parts.day} ${parts.month} ${parts.year}`;
+}
+
 export function formatDate(value: Date | string | null | undefined): string {
   if (!value) return "—";
   const date = typeof value === "string" ? new Date(value) : value;
   if (Number.isNaN(date.getTime())) return "—";
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(date);
+  return dayMonthYear(date);
 }
 
 export function formatDateTime(value: Date | string | null | undefined): string {
   if (!value) return "—";
   const date = typeof value === "string" ? new Date(value) : value;
   if (Number.isNaN(date.getTime())) return "—";
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
+  return `${dayMonthYear(date)}, ${TIME_24H.format(date)}`;
+}
+
+/** "2026-09" → "Sep 2026". */
+export function formatMonth(value: string): string {
+  const [year, month] = value.split("-").map(Number);
+  if (!year || !month) return value;
+  return MONTH_YEAR.format(new Date(year, month - 1, 1));
 }
 
 export function formatRelative(value: Date | string | null | undefined): string {

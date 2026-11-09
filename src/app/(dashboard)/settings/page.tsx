@@ -4,7 +4,7 @@ import { Badge, DefinitionList, PageHeader, StatCard } from "@/components/ui/dat
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireOrganization } from "@/lib/context";
 import { hasPermission } from "@/lib/permissions";
-import { formatDate, formatDateTime, formatNumber } from "@/lib/format";
+import { formatDate, formatDateTime, formatNumber, titleCase } from "@/lib/format";
 import { savePricingSheetUrlAction, saveLeadsSheetUrlAction } from "./actions";
 import { SheetLinkForm } from "./sheet-link-form";
 
@@ -42,7 +42,7 @@ export default async function SettingsPage() {
               { label: "Name", value: context.membership.organizationName },
               { label: "Slug", value: context.membership.organizationSlug },
               { label: "Status", value: <Badge tone="success">{context.membership.organizationStatus}</Badge> },
-              { label: "Default Follow-up", value: settings?.defaultFollowUpType ?? "CALL" },
+              { label: "Default Follow-up", value: titleCase(settings?.defaultFollowUpType ?? "CALL") },
               { label: "Auto Follow-up", value: settings?.autoCreateFollowUpOnNewLead ? "Enabled" : "Disabled" },
               { label: "Token Budget", value: formatNumber(settings?.aiMonthlyTokenBudget ?? 0) },
             ]}
@@ -93,9 +93,9 @@ export default async function SettingsPage() {
         <CardContent>
           <DefinitionList
             items={[
-              { label: "Plan", value: subscription?.plan ?? "STARTER" },
+              { label: "Plan", value: titleCase(subscription?.plan ?? "STARTER") },
               { label: "Status", value: subscription ? <Badge tone="primary">{subscription.status}</Badge> : "Not configured" },
-              { label: "Seats", value: subscription?.seats ?? "-" },
+              { label: "Seats", value: subscription?.seats ?? "—" },
               { label: "Period Start", value: formatDate(subscription?.currentPeriodStart) },
               { label: "Period End", value: formatDate(subscription?.currentPeriodEnd) },
               { label: "Cancel at period end", value: subscription?.cancelAtPeriodEnd ? "Yes" : "No" },

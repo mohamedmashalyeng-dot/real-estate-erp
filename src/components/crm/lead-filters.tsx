@@ -6,6 +6,7 @@ import { Search, X } from "lucide-react";
 import { Input, Select } from "@/components/ui/form-controls";
 import { Button } from "@/components/ui/button";
 import { LEAD_STAGES, LEAD_SOURCES } from "@/lib/constants";
+import { titleCase } from "@/lib/format";
 
 export function LeadFilters({
   stages = LEAD_STAGES,
@@ -76,7 +77,7 @@ export function LeadFilters({
           <option value="ALL">All Stages</option>
           {stages.map((item) => (
             <option key={item} value={item}>
-              {item}
+              {titleCase(item)}
             </option>
           ))}
         </Select>
@@ -90,7 +91,7 @@ export function LeadFilters({
           <option value="ALL">All Sources</option>
           {sources.map((item) => (
             <option key={item} value={item}>
-              {item}
+              {titleCase(item)}
             </option>
           ))}
         </Select>

@@ -55,7 +55,7 @@ export default async function ProjectsPage() {
                 {projects.map((project) => (
                   <TR key={project.id}>
                     <TD className="font-medium">{project.name}</TD>
-                    <TD>{[project.locationCity, project.locationCountry].filter(Boolean).join(", ") || "-"}</TD>
+                    <TD>{[project.locationCity, project.locationCountry].filter(Boolean).join(", ") || "—"}</TD>
                     <TD><Badge tone={project.status === "READY" ? "success" : "neutral"}>{project.status}</Badge></TD>
                     <TD>{project._count.units}</TD>
                     <TD>{project._count.buildings}</TD>

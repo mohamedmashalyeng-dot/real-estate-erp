@@ -7,10 +7,13 @@ import { ArrowRight, Banknote, BarChart3, Building2, Calculator, Loader2, Users 
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/form-controls";
 
+// The seeded demo account only exists in development databases.
+const DEMO_LOGIN = process.env.NODE_ENV === "production" ? null : { email: "owner@primeestates.com", password: "Password123!" };
+
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("owner@primeestates.com");
-  const [password, setPassword] = useState("Password123!");
+  const [email, setEmail] = useState(DEMO_LOGIN?.email ?? "");
+  const [password, setPassword] = useState(DEMO_LOGIN?.password ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -131,10 +134,12 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <div className="rounded-lg border border-dashed border-border bg-muted/40 p-3 text-center text-xs text-muted-foreground">
-            Demo: <span className="font-medium text-foreground">owner@primeestates.com</span> /{" "}
-            <span className="font-medium text-foreground">Password123!</span>
-          </div>
+          {DEMO_LOGIN ? (
+            <div className="rounded-lg border border-dashed border-border bg-muted/40 p-3 text-center text-xs text-muted-foreground">
+              Demo: <span className="font-medium text-foreground">{DEMO_LOGIN.email}</span> /{" "}
+              <span className="font-medium text-foreground">{DEMO_LOGIN.password}</span>
+            </div>
+          ) : null}
         </div>
       </main>
     </div>

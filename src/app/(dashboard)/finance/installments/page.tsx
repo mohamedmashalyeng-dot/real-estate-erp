@@ -225,14 +225,14 @@ export default async function InstallmentsPage({
                 {payments.map((payment) => (
                   <TR key={payment.id}>
                     <TD>{formatDate(payment.paidAt)}</TD>
-                    <TD>{payment.lead ? `${payment.lead.firstName} ${payment.lead.lastName}` : "-"}</TD>
+                    <TD>{payment.lead ? `${payment.lead.firstName} ${payment.lead.lastName}` : "—"}</TD>
                     <TD className="font-medium">
                       <Link href={`/finance/sales/${payment.sale.id}`} className="hover:text-primary">{payment.sale.reference}</Link>
                     </TD>
-                    <TD>{payment.installment?.sequence ?? "-"}</TD>
+                    <TD>{payment.installment?.sequence ?? "—"}</TD>
                     <TD>{titleCase(payment.method)}</TD>
-                    <TD>{payment.reference ?? "-"}</TD>
-                    <TD>{payment.receivedBy?.name ?? "-"}</TD>
+                    <TD>{payment.reference ?? "—"}</TD>
+                    <TD>{payment.receivedBy?.name ?? "—"}</TD>
                     <TD align="right">{formatMoney(payment.amount, payment.currency)}</TD>
                   </TR>
                 ))}

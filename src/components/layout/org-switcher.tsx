@@ -47,8 +47,8 @@ export function OrgSwitcher({
               {current?.organizationName?.[0]?.toUpperCase() ?? "O"}
             </div>
             <div className="min-w-0 truncate">
-              <p className="truncate font-medium leading-none">{current?.organizationName ?? "Select Org"}</p>
-              <p className="mt-1 truncate text-[11px] text-sidebar-muted">{current?.roleName ?? "Member"}</p>
+              <p className="truncate font-medium leading-tight">{current?.organizationName ?? "Select Org"}</p>
+              <p className="mt-0.5 truncate text-[11px] leading-tight text-sidebar-muted">{current?.roleName ?? "Member"}</p>
             </div>
           </div>
           <ChevronsUpDown className="size-4 shrink-0 text-sidebar-muted" />

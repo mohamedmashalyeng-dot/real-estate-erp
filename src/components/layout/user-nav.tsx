@@ -33,8 +33,8 @@ export function UserNav({ user }: { user: SessionUser }) {
         >
           <Avatar name={user.name} src={user.image} className="size-8 border-sidebar-border bg-sidebar-primary text-sidebar-primary-foreground" />
           <div className="min-w-0 flex-1 truncate">
-            <p className="truncate font-medium leading-none">{user.name}</p>
-            <p className="mt-1 truncate text-[11px] text-sidebar-muted">{user.email}</p>
+            <p className="truncate font-medium leading-tight">{user.name}</p>
+            <p className="mt-0.5 truncate text-[11px] leading-tight text-sidebar-muted">{user.email}</p>
           </div>
           <ChevronsUpDown className="size-4 shrink-0 text-sidebar-muted" />
         </button>

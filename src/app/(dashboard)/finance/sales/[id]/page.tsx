@@ -88,7 +88,7 @@ export default async function SaleStatementPage({ params }: { params: Promise<{ 
               { label: "Sale date", value: formatDate(sale.saleDate) },
               { label: "Status", value: <Badge tone={sale.status === "CANCELLED" ? "danger" : "primary"}>{sale.status}</Badge> },
               { label: "Price / discount", value: `${formatMoney(sale.salePrice, currency)} / ${formatMoney(sale.discount, currency)}` },
-              { label: "Next due", value: nextDue ? `${formatDate(nextDue.dueDate)} · ${formatMoney(fromCents(remainingCents(nextDue)), currency)}` : "-" },
+              { label: "Next due", value: nextDue ? `${formatDate(nextDue.dueDate)} · ${formatMoney(fromCents(remainingCents(nextDue)), currency)}` : "—" },
             ]}
           />
           {sale.paymentPlan?.notes ? <p className="mt-4 text-xs text-muted-foreground">{sale.paymentPlan.notes}</p> : null}
@@ -174,10 +174,10 @@ export default async function SaleStatementPage({ params }: { params: Promise<{ 
                   {sale.payments.map((payment) => (
                     <TR key={payment.id}>
                       <TD>{formatDate(payment.paidAt)}</TD>
-                      <TD>{payment.installment ? `#${payment.installment.sequence}` : "-"}</TD>
+                      <TD>{payment.installment ? `#${payment.installment.sequence}` : "—"}</TD>
                       <TD>{titleCase(payment.method)}</TD>
-                      <TD>{payment.reference ?? "-"}</TD>
-                      <TD>{payment.receivedBy?.name ?? "-"}</TD>
+                      <TD>{payment.reference ?? "—"}</TD>
+                      <TD>{payment.receivedBy?.name ?? "—"}</TD>
                       <TD align="right">{formatMoney(payment.amount, payment.currency)}</TD>
                     </TR>
                   ))}
