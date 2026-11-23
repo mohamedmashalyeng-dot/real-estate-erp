@@ -38,6 +38,27 @@ Do not reset it, run `db push --accept-data-loss`, or mark the initial migration
 as applied without verifying that the existing schema matches it. A migration
 failure prevents the new process from starting rather than resetting data.
 
+### Hostinger starts Next.js directly: missing Facebook columns
+
+If runtime logs say that `OrganizationSettings.facebookPageAccessToken` does
+not exist, the code was deployed without the schema migration. Some managed
+deployments start Next.js directly and do not run npm's `prestart` lifecycle.
+
+The preferred release step is `npm run db:deploy` with the hosted application's
+runtime environment. If a terminal/release command is unavailable, back up the
+ERP database, select that existing database in phpMyAdmin, and import
+[`sql/repair-facebook-leads.sql`](./sql/repair-facebook-leads.sql). This portable
+MySQL/MariaDB script adds only missing Facebook columns and the Page index. It
+can be imported again without overwriting records or saved credentials.
+
+This fallback deliberately does not invent or rewrite Prisma migration history.
+After the SQL repair, if the original initial migration is already recorded,
+reconcile the applied Facebook migration from the application server with
+`npx prisma migrate resolve --applied 20261123170000_facebook_leads` before using
+`npm run db:deploy` again. If the initial migration is unrecorded, inspect the
+actual schema before baselining it. Do not reset the database. A manual SQL
+repair alone does not require rebuilding the app.
+
 ## Meta and ERP connection
 
 1. In the Meta app, configure a **Page** webhook with callback
