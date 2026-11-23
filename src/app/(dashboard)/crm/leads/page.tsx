@@ -35,14 +35,14 @@ export default async function LeadsPage({
   const context = await requirePermission("leads.view");
   const params = await searchParams;
 
-  const page = Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1);
-  const pageSize = Math.max(10, Number.parseInt(params.pageSize ?? "25", 10) || 25);
+  const page = Math.min(100_000, Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1));
+  const pageSize = Math.min(100, Math.max(10, Number.parseInt(params.pageSize ?? "25", 10) || 25));
   const skip = (page - 1) * pageSize;
 
   const where: Prisma.LeadWhereInput = {};
 
   if (params.search) {
-    const q = params.search.trim();
+    const q = params.search.trim().slice(0, 200);
     // MySQL/MariaDB collations are case-insensitive, so `contains` already ignores case.
     where.OR = [
       { firstName: { contains: q } },

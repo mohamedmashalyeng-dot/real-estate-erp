@@ -32,7 +32,7 @@ interface NavSection {
   items: NavItem[];
 }
 
-const NAV_SECTIONS: NavSection[] = [
+export const NAV_SECTIONS: NavSection[] = [
   {
     items: [
       {
@@ -114,7 +114,7 @@ const NAV_SECTIONS: NavSection[] = [
   },
 ];
 
-export function SidebarNav({ permissions }: { permissions: string[] }) {
+export function SidebarNav({ permissions, onNavigate }: { permissions: string[]; onNavigate?: () => void }) {
   const pathname = usePathname();
   const permSet = new Set(permissions);
   // Highlight only the most specific match (e.g. /sales/calculator, not /sales too).
@@ -146,11 +146,12 @@ export function SidebarNav({ permissions }: { permissions: string[] }) {
                 <Link
                   key={item.href}
                   href={item.href}
+                  onClick={onNavigate}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "group relative flex items-center justify-between rounded-lg px-3 py-2 text-[13px] font-medium transition-colors",
+                    "group relative flex items-center justify-between rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all duration-200 motion-reduce:transition-none",
                     active
-                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                      ? "bg-sidebar-primary/18 text-white ring-1 ring-sidebar-primary/20"
                       : "text-sidebar-foreground/75 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
                   )}
                 >

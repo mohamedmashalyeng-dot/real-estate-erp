@@ -77,7 +77,7 @@ export function toAppError(error: unknown): AppError {
     });
   }
   if (error instanceof Error) {
-    return new AppError(error.message, { code: "internal_error", status: 500 });
+    return new AppError("Something went wrong. Please try again.", { code: "internal_error", status: 500 });
   }
   return new AppError("Unexpected error.", { code: "internal_error", status: 500 });
 }
@@ -97,7 +97,7 @@ export function actionSuccess<T>(data: T, message?: string): ActionResult<T> {
 export function actionFailure(error: unknown): ActionResult<never> {
   const appError = toAppError(error);
   if (appError.status >= 500) {
-    console.error("[action-error]", error);
+    console.error("[action-error]", { name: error instanceof Error ? error.name : "UnknownError", code: appError.code });
   }
   return {
     ok: false,

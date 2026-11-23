@@ -110,10 +110,16 @@ export function scopeTenantArgs(
   if (WHERE_OPS.has(operation)) {
     assertSameTenant(model, operation, readOrganizationId(next.where), organizationId);
     next.where = withOrganizationId(next.where, organizationId);
+    if (operation === "update" || operation === "updateMany") {
+      assertSameTenant(model, operation, readOrganizationId(next.data), organizationId);
+      assertOrganizationRelation(next.data, organizationId);
+    }
     return next;
   }
 
   if (CREATE_OPS.has(operation)) {
+    const rows = Array.isArray(next.data) ? next.data : [next.data];
+    rows.forEach((row) => assertOrganizationRelation(row, organizationId));
     if (operation === "createMany") {
       const data = next.data;
       const rows = Array.isArray(data) ? data : [data];
@@ -136,6 +142,9 @@ export function scopeTenantArgs(
   if (operation === UPSERT) {
     assertSameTenant(model, operation, readOrganizationId(next.where), organizationId);
     assertSameTenant(model, operation, readOrganizationId(next.create), organizationId);
+    assertSameTenant(model, operation, readOrganizationId(next.update), organizationId);
+    assertOrganizationRelation(next.create, organizationId);
+    assertOrganizationRelation(next.update, organizationId);
     next.where = withOrganizationId(next.where, organizationId);
     next.create = withOrganizationId(next.create, organizationId);
     return next;
@@ -144,6 +153,15 @@ export function scopeTenantArgs(
   // Anything else (raw reads, field selections, ...) is passed through; the
   // guard never widens access, only narrows it.
   return next;
+}
+
+function assertOrganizationRelation(data: unknown, organizationId: string) {
+  if (!data || typeof data !== "object" || !("organization" in data)) return;
+  const relation = (data as { organization: unknown }).organization;
+  if (!relation || typeof relation !== "object" || Object.keys(relation).length !== 1 || !("connect" in relation)
+    || (relation as { connect?: { id?: unknown } }).connect?.id !== organizationId) {
+    throw new TenantIsolationError("Organization relations cannot move records outside the active organization.");
+  }
 }
 
 export function tenantGuardExtension(organizationId: string) {

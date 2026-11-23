@@ -26,17 +26,27 @@ export function redactSensitive(
   if (!value) return undefined;
   const output: Record<string, unknown> = {};
   for (const [key, entry] of Object.entries(value)) {
-    if (REDACTED_KEYS.has(key.toLowerCase())) {
+    if (REDACTED_KEYS.has(key.toLowerCase()) || /password|passphrase|token|secret|authorization|api.?key|cookie|credential/i.test(key)) {
       output[key] = "[redacted]";
       continue;
     }
-    if (entry && typeof entry === "object" && !Array.isArray(entry) && !(entry instanceof Date)) {
+    if (Array.isArray(entry)) {
+      output[key] = redactArray(entry);
+      continue;
+    }
+    if (entry && typeof entry === "object" && !(entry instanceof Date)) {
       output[key] = redactSensitive(entry as Record<string, unknown>);
       continue;
     }
     output[key] = entry;
   }
   return output;
+}
+
+function redactArray(values: unknown[]): unknown[] {
+  return values.map((value) => Array.isArray(value) ? redactArray(value)
+    : value && typeof value === "object" && !(value instanceof Date)
+      ? redactSensitive(value as Record<string, unknown>) : value);
 }
 
 export interface AuditInput {
@@ -71,7 +81,7 @@ export async function recordAudit(input: AuditInput): Promise<void> {
     console.error("[audit] failed to persist audit entry", {
       action: input.action,
       entityType: input.entityType,
-      error: error instanceof Error ? error.message : String(error),
+      error: error instanceof Error ? error.name : "UnknownError",
     });
   }
 }

@@ -35,13 +35,17 @@ export const env = {
     return requireEnv("DATABASE_URL");
   },
   get authSecret(): string {
-    return read("AUTH_SECRET") ?? "insecure-development-secret-do-not-use-in-production";
+    const secret = read("AUTH_SECRET")?.trim();
+    if (process.env.NODE_ENV === "production" && (!secret || secret.length < 32 || secret.startsWith("insecure-development-") || secret.startsWith("replace-me"))) {
+      throw new Error("A unique AUTH_SECRET of at least 32 characters is required in production.");
+    }
+    return secret ?? "insecure-development-secret-do-not-use-in-production";
   },
   get appUrl(): string {
     return read("APP_URL") ?? "http://localhost:3000";
   },
   get sessionMaxAgeSeconds(): number {
-    return intFromEnv("SESSION_MAX_AGE_SECONDS", 60 * 60 * 8);
+    return Math.min(60 * 60 * 24, Math.max(300, intFromEnv("SESSION_MAX_AGE_SECONDS", 60 * 60 * 8)));
   },
   get aiProvider(): AIProviderName {
     const raw = (read("AI_PROVIDER") ?? "mock").toLowerCase();

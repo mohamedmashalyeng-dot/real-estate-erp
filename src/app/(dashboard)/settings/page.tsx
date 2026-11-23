@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { Building2, Clock, CreditCard, Settings } from "lucide-react";
+import { Building2, Clock, CreditCard, Settings, Link2 } from "lucide-react";
 import { Badge, DefinitionList, PageHeader, StatCard } from "@/components/ui/data-display";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireOrganization } from "@/lib/context";
@@ -26,8 +26,12 @@ export default async function SettingsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Settings"
-        description="Organization defaults, SaaS plan status, operational SLA rules, and usage telemetry."
+        description="A few simple controls to keep your workspace running your way."
       />
+
+      <nav aria-label="Settings sections" className="flex flex-wrap gap-2 rounded-2xl border border-border bg-card p-2">
+        {[{ href: "#facebook", label: "Facebook leads" }, { href: "#google-sheet", label: "Google Sheets" }, { href: "#pricing-sheet", label: "Pricing" }, { href: "#organization", label: "Organization" }].map((item) => <a key={item.href} href={item.href} className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-muted-foreground transition hover:bg-primary/8 hover:text-primary"><Link2 className="size-3.5" />{item.label}</a>)}
+      </nav>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Organization" value={context.membership.organizationName} icon={Building2} />
@@ -36,7 +40,7 @@ export default async function SettingsPage() {
         <StatCard label="AI Budget" value={formatNumber(settings?.aiMonthlyTokenBudget ?? 0)} icon={Settings} />
       </div>
 
-      <Card>
+      <Card id="organization">
         <CardHeader><CardTitle>Organization Defaults</CardTitle></CardHeader>
         <CardContent>
           <DefinitionList
@@ -57,7 +61,6 @@ export default async function SettingsPage() {
           <CardTitle>Facebook Lead Ads</CardTitle>
           <CardDescription>
             Connect your Facebook Page to import lead form submissions into CRM.
-            {settings?.facebookLeadsSyncedAt ? ` Last synced: ${formatDateTime(settings.facebookLeadsSyncedAt)}.` : ""}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -65,6 +68,7 @@ export default async function SettingsPage() {
             pageId={settings?.facebookPageId ?? null}
             pageName={settings?.facebookPageName ?? null}
             missingConfiguration={missingFacebookConfiguration()}
+            lastSyncedLabel={settings?.facebookLeadsSyncedAt ? formatDateTime(settings.facebookLeadsSyncedAt) : null}
           />
         </CardContent>
       </Card>

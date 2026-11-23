@@ -62,6 +62,8 @@ export default async function DashboardPage() {
   const context = await requireOrganization();
   const { db, currency, membership, user, permissions } = context;
   const canLeads = hasPermission(permissions, "leads.view");
+  const canProjects = hasPermission(permissions, "projects.view");
+  const canSales = hasPermission(permissions, "sales.view");
   const canFinance = hasPermission(permissions, "payments.view") || hasPermission(permissions, "collections.view");
 
   const now = new Date();
@@ -71,15 +73,15 @@ export default async function DashboardPage() {
 
   const [stageGroups, totalLeads, unitGroups, sales, activeReservations, followUps, recentLeads, overdue, upcoming] =
     await Promise.all([
-      db.lead.groupBy({ by: ["stage"], _count: { _all: true } }),
-      db.lead.count(),
-      db.unit.groupBy({ by: ["status"], _count: { _all: true } }),
-      db.sale.aggregate({
+      canLeads ? db.lead.groupBy({ by: ["stage"], _count: { _all: true } }) : Promise.resolve([]),
+      canLeads ? db.lead.count() : Promise.resolve(0),
+      canProjects ? db.unit.groupBy({ by: ["status"], _count: { _all: true } }) : Promise.resolve([]),
+      canSales ? db.sale.aggregate({
         _sum: { contractValue: true },
         _count: { _all: true },
         where: { status: { in: ["APPROVED", "CONTRACTED", "COMPLETED"] } },
-      }),
-      db.reservation.count({ where: { status: "ACTIVE" } }),
+      }) : Promise.resolve({ _sum: { contractValue: null }, _count: { _all: 0 } }),
+      canSales ? db.reservation.count({ where: { status: "ACTIVE" } }) : Promise.resolve(0),
       canLeads
         ? db.followUp.findMany({
             where: { status: "PENDING", dueAt: { lt: endOfToday } },
@@ -146,6 +148,7 @@ export default async function DashboardPage() {
       />
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+        {canLeads ? (
         <StatCard
           label="Active leads"
           value={formatNumber(openLeads)}
@@ -153,6 +156,8 @@ export default async function DashboardPage() {
           icon={Users}
           href={canLeads ? "/crm/leads" : undefined}
         />
+        ) : null}
+        {canProjects ? (
         <StatCard
           label="Available units"
           value={formatNumber(availableUnits)}
@@ -161,6 +166,8 @@ export default async function DashboardPage() {
           tone="info"
           href="/inventory/projects"
         />
+        ) : null}
+        {canSales ? (
         <StatCard
           label="Contracted sales"
           value={formatMoney(sales._sum.contractValue, currency, { compact: true })}
@@ -169,6 +176,8 @@ export default async function DashboardPage() {
           tone="success"
           href="/sales"
         />
+        ) : null}
+        {canFinance ? (
         <StatCard
           label="Overdue collections"
           value={formatMoney(fromCents(overdueCents), currency, { compact: true })}
@@ -177,10 +186,11 @@ export default async function DashboardPage() {
           tone={overdue.length ? "danger" : "neutral"}
           href={canFinance ? "/finance/installments?status=overdue" : undefined}
         />
+        ) : null}
       </div>
 
       <div className="grid gap-6 xl:grid-cols-3">
-        <Card className="xl:col-span-2">
+        {canLeads ? <Card className="xl:col-span-2">
           <CardHeader className="flex-row items-center justify-between">
             <CardTitle>Sales pipeline</CardTitle>
             {canLeads ? <SectionLink href="/crm/leads">All leads</SectionLink> : null}
@@ -209,9 +219,9 @@ export default async function DashboardPage() {
               {formatNumber(stageCounts.get("LOST") ?? 0)} lost leads not shown.
             </p>
           </CardContent>
-        </Card>
+        </Card> : null}
 
-        <Card>
+        {canProjects ? <Card>
           <CardHeader className="flex-row items-center justify-between">
             <CardTitle>Inventory</CardTitle>
             <SectionLink href="/inventory/projects">Units</SectionLink>
@@ -256,7 +266,7 @@ export default async function DashboardPage() {
               })}
             </ul>
           </CardContent>
-        </Card>
+        </Card> : null}
       </div>
 
       <div className="grid gap-6 xl:grid-cols-3">

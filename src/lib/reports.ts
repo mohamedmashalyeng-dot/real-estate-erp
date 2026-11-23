@@ -272,6 +272,11 @@ export async function buildReport(db: TenantScopedClient, range: ReportRange, no
 function csvCell(value: unknown): string {
   if (value === null || value === undefined) return "";
   const text = String(value);
+  // Treat user-supplied spreadsheet formulas as text. Keep plain numeric
+  // strings numeric so legitimate negative financial values still work.
+  if (typeof value === "string" && /^(?:\s*[=+\-@＝＋－＠]|[\t\r\n])/u.test(text) && !/^-?\d+(?:\.\d+)?$/.test(text)) {
+    return `"\t${text.replace(/"/g, '""')}"`;
+  }
   return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }
 

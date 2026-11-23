@@ -8,8 +8,8 @@ export const facebookWebhookSchema = z.object({
   object: z.literal("page"),
   entry: z.array(z.object({
     id: webhookId,
-    changes: z.array(z.object({ field: z.string(), value: z.unknown() })).default([]),
-  })),
+    changes: z.array(z.object({ field: z.string().max(100), value: z.unknown() })).max(100).default([]),
+  })).max(100),
 });
 const leadgenSchema = z.object({ leadgen_id: webhookId, page_id: webhookId, form_id: webhookId.optional() });
 

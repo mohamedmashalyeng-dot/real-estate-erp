@@ -82,7 +82,7 @@ export const listMemberships = cache(
       orderBy: [{ isPrimary: "desc" }, { joinedAt: "asc" }],
     });
 
-    return rows.map((row) => ({
+    return rows.filter((row) => row.role.organizationId === row.organizationId).map((row) => ({
       membershipId: row.id,
       organizationId: row.organizationId,
       organizationName: row.organization.name,

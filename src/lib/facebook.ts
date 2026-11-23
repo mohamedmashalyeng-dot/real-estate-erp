@@ -2,7 +2,7 @@ import { createCipheriv, createDecipheriv, createHmac, randomBytes, timingSafeEq
 import { z } from "zod";
 import { AppError } from "./errors";
 
-export const facebookId = z.string().regex(/^\d+$/, "Enter a numeric Facebook ID.");
+export const facebookId = z.string().regex(/^\d{1,32}$/, "Enter a numeric Facebook ID.");
 export const facebookLeadSchema = z.object({
   id: facebookId,
   created_time: z.string().optional(),
@@ -48,7 +48,7 @@ export function decryptFacebookToken(value: string, organizationId: string): str
   }
 }
 
-export function verifyFacebookSignature(body: string, signature: string | null, secret: string): boolean {
+export function verifyFacebookSignature(body: string | Uint8Array, signature: string | null, secret: string): boolean {
   if (!secret || !signature || !/^sha256=[a-f\d]{64}$/i.test(signature)) return false;
   const expected = createHmac("sha256", secret).update(body).digest();
   return timingSafeEqual(expected, Buffer.from(signature.slice(7), "hex"));

@@ -43,7 +43,7 @@ afterAll(async () => { vi.unstubAllEnvs(); await prisma.$disconnect(); });
 function webhookRequest(entries: unknown[], options: { signature?: string; body?: string } = {}) {
   const body = options.body ?? JSON.stringify({ object: "page", entry: entries });
   const signature = options.signature ?? `sha256=${createHmac("sha256", SECRET).update(body).digest("hex")}`;
-  return new Request("https://erp.example.test/api/webhooks/facebook", { method: "POST", body, headers: { "x-hub-signature-256": signature } });
+  return new Request("https://erp.example.test/api/webhooks/facebook", { method: "POST", body, headers: { "x-hub-signature-256": signature, "Content-Type": "application/json" } });
 }
 
 function entry(pageId: string = PAGE_ID, leadId = LEAD.id) {
@@ -158,6 +158,17 @@ describe("Facebook import, webhook and organization integration", () => {
   it("accepts verification only with the configured verify token", async () => {
     expect(await (await GET(new Request("https://erp.test/api/webhooks/facebook?hub.mode=subscribe&hub.verify_token=test-verify-token&hub.challenge=1234"))).text()).toBe("1234");
     expect((await GET(new Request("https://erp.test/api/webhooks/facebook?hub.mode=subscribe&hub.verify_token=wrong&hub.challenge=1234"))).status).toBe(403);
+  });
+
+  it("rejects oversized chunked payloads and unsupported content types", async () => {
+    expect((await POST(webhookRequest([], { body: "x".repeat(256 * 1024 + 1) }))).status).toBe(413);
+    const request = webhookRequest([]);
+    request.headers.set("Content-Type", "text/plain");
+    expect((await POST(request)).status).toBe(415);
+  });
+
+  it("rejects oversized batches before querying organizations", async () => {
+    expect((await POST(webhookRequest(Array.from({ length: 101 }, () => entry())))).status).toBe(400);
   });
 
   it("rejects unsigned, tampered, malformed and unexpected-object notifications before fetching", async () => {

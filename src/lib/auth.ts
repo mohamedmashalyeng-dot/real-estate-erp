@@ -1,18 +1,15 @@
-import NextAuth from "next-auth";
+import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
-import { z } from "zod";
 import { env } from "./env";
-import { prisma } from "./prisma";
+import { authorizeCredentials, LoginRateLimitError } from "./login";
+import { safeLocalRedirect } from "./security";
 
-const credentialsSchema = z.object({
-  email: z.string().trim().toLowerCase().min(3),
-  password: z.string().min(1),
-});
+class LoginThrottled extends CredentialsSignin { code = "rate_limited"; }
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
+export const { handlers, auth, signIn, signOut } = NextAuth(() => ({
   secret: env.authSecret,
   trustHost: true,
+  useSecureCookies: env.appUrl.startsWith("https://"),
   session: {
     strategy: "jwt",
     maxAge: env.sessionMaxAgeSeconds,
@@ -28,37 +25,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: "Password", type: "password" },
       },
       async authorize(rawCredentials) {
-        const parsed = credentialsSchema.safeParse(rawCredentials);
-        if (!parsed.success) return null;
-
-        const user = await prisma.user.findUnique({
-          where: { email: parsed.data.email },
-        });
-        if (!user) return null;
-        if (user.status === "SUSPENDED") return null;
-
-        const passwordMatches = await bcrypt.compare(
-          parsed.data.password,
-          user.passwordHash,
-        );
-        if (!passwordMatches) return null;
-
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { lastLoginAt: new Date() },
-        });
-
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          image: user.image,
-          isPlatformAdmin: user.isPlatformAdmin,
-        };
+        try { return await authorizeCredentials(rawCredentials); }
+        catch (error) {
+          if (error instanceof LoginRateLimitError) throw new LoginThrottled();
+          // Never put database errors, submitted credentials or secrets into Auth.js logs.
+          console.error("[auth] Sign-in could not be completed.");
+          return null;
+        }
       },
     }),
   ],
   callbacks: {
+    redirect({ url }) { return safeLocalRedirect(url, env.appUrl); },
     jwt({ token, user }) {
       if (user) {
         token.sub = user.id;
@@ -76,4 +54,4 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return session;
     },
   },
-});
+}));

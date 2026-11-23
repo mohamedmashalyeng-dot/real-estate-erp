@@ -19,6 +19,8 @@ export async function connectFacebookPageAction(formData: FormData): Promise<Act
       select: { facebookPageId: true, facebookPageAccessToken: true },
     });
     const providedToken = String(formData.get("pageToken") ?? "").trim();
+    if (providedToken.length > 8192) throw new AppError("This token is too long. Copy the Page access token from Meta.", { code: "facebook_token_invalid" });
+    if (/^[a-f\d]{64}$/i.test(providedToken)) throw new AppError("This looks like a webhook verify token. Copy the Page access token from Graph API Explorer with your Page selected.", { code: "facebook_token_invalid" });
     const token = providedToken || (existing?.facebookPageId === pageId && existing.facebookPageAccessToken
       ? decryptFacebookToken(existing.facebookPageAccessToken, context.organizationId)
       : "");
