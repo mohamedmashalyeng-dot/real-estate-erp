@@ -445,6 +445,11 @@ model OrganizationSettings {
   pricingSheetUrl             String? @db.Text
   pricingSheetData            Json?
   pricingSheetSyncedAt        DateTime?
+  // One Page per organization; tokens are encrypted before storage.
+  facebookPageId              String? @unique
+  facebookPageName            String?
+  facebookPageAccessToken     String? @db.LongText
+  facebookLeadsSyncedAt       DateTime?
   createdAt                   DateTime     @default(now())
   updatedAt                   DateTime     @updatedAt
 

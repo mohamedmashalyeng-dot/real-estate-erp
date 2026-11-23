@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FileSpreadsheet, Plus } from "lucide-react";
+import { FileSpreadsheet, Link2, Plus } from "lucide-react";
 import { requirePermission } from "@/lib/context";
 import { hasPermission } from "@/lib/permissions";
 import { formatDateTime } from "@/lib/format";
@@ -12,6 +12,7 @@ import { Prisma } from "@/generated/prisma/client";
 import type { LeadSource, LeadStage, LeadTemperature } from "@/generated/prisma/enums";
 import { LEAD_SOURCE_VALUES, LEAD_STAGE_VALUES, LEAD_TEMPERATURE_VALUES } from "./new/schema";
 import { SheetSyncButton } from "./sheet-sync-button";
+import { FacebookSyncButton } from "./facebook-sync-button";
 
 export const metadata = {
   title: "CRM Leads",
@@ -96,7 +97,7 @@ export default async function LeadsPage({
     }),
     context.db.organizationSettings.findUnique({
       where: { organizationId: context.organizationId },
-      select: { leadsSheetUrl: true, leadsSheetSyncedAt: true },
+      select: { leadsSheetUrl: true, leadsSheetSyncedAt: true, facebookPageId: true, facebookLeadsSyncedAt: true },
     }),
   ]);
 
@@ -115,6 +116,13 @@ export default async function LeadsPage({
         description="Monitor lead generation pipeline, assign agents, and track conversion milestones."
         actions={
           <>
+            {settings?.facebookPageId && canSyncSheet ? (
+              <FacebookSyncButton lastSyncedLabel={settings.facebookLeadsSyncedAt ? formatDateTime(settings.facebookLeadsSyncedAt) : null} />
+            ) : !settings?.facebookPageId && canConnectSheet ? (
+              <Button asChild size="sm" variant="outline">
+                <Link href="/settings#facebook"><Link2 className="size-4" /><span>Connect Facebook</span></Link>
+              </Button>
+            ) : null}
             {settings?.leadsSheetUrl && canSyncSheet ? (
               <SheetSyncButton
                 lastSyncedLabel={settings.leadsSheetSyncedAt ? formatDateTime(settings.leadsSheetSyncedAt) : null}
